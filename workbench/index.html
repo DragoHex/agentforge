@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dev Workbench</title>
+<style>
+  :root {
+    --ivory:#FAF9F5; --slate:#141413; --clay:#D97757; --olive:#788C5D;
+    --oat:#E3DACC; --white:#FFFFFF; --gray-150:#F0EEE6; --gray-300:#D1CFC5;
+    --gray-500:#87867F; --gray-700:#3D3D3A; --danger:#B04A4A;
+    --warning:#C78E3F; --info:#5C7CA3;
+    --font-sans:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    --font-mono:ui-monospace,"SF Mono","Cascadia Code",Menlo,monospace;
+    --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px; --sp-5:24px;
+    --sp-6:32px; --r-xs:4px; --r-sm:8px; --r-md:12px; --r-lg:20px;
+    --shadow-sm:0 1px 2px rgba(0,0,0,.06); --shadow-md:0 4px 10px rgba(0,0,0,.08);
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{font:430 16px/1.55 var(--font-sans);color:var(--slate);background:var(--ivory);
+       max-width:1200px;margin:0 auto;padding:var(--sp-6) var(--sp-5);
+       -webkit-font-smoothing:antialiased}
+
+  /* ── Header ── */
+  .header{display:flex;align-items:center;justify-content:space-between;
+          margin-bottom:var(--sp-6);padding-bottom:var(--sp-4);
+          border-bottom:1px solid var(--gray-300)}
+  .header-title{font:500 28px/1.2 var(--font-sans);color:var(--slate)}
+  .header-meta{font-size:13px;color:var(--gray-500);text-align:right}
+  .header-meta .last-updated{font:13px var(--font-mono);color:var(--gray-500)}
+  .btn-refresh{display:inline-flex;align-items:center;gap:var(--sp-2);
+               font:500 13px var(--font-sans);padding:6px 14px;border:1px solid var(--gray-300);
+               border-radius:var(--r-sm);background:var(--white);color:var(--slate);
+               cursor:pointer;transition:background .15s,border-color .15s;text-decoration:none}
+  .btn-refresh:hover{background:var(--gray-150);border-color:var(--gray-500)}
+  .btn-refresh.loading{opacity:.6;pointer-events:none}
+
+  /* ── Section headings ── */
+  .section{margin-bottom:var(--sp-7)}
+  .section-header{display:flex;align-items:baseline;gap:var(--sp-3);
+                  margin-bottom:var(--sp-4);padding-bottom:var(--sp-2);
+                  border-bottom:2px solid var(--gray-300)}
+  .section-title{font:500 22px/1.3 var(--font-sans)}
+  .section-count{font:500 12px var(--font-sans);color:var(--gray-500);
+                 background:var(--gray-150);padding:2px 8px;
+                 border-radius:var(--r-xs);letter-spacing:.02em}
+
+  /* ── Worktree list ── */
+  .worktree-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:var(--sp-3)}
+  .worktree-card{background:var(--white);border:1px solid var(--gray-300);
+                 border-radius:var(--r-md);padding:var(--sp-4);
+                 box-shadow:var(--shadow-sm);transition:box-shadow .15s}
+  .worktree-card:hover{box-shadow:var(--shadow-md)}
+  .wt-name{font:500 15px/1.3 var(--font-sans);margin-bottom:var(--sp-1)}
+  .wt-branch{font:13px var(--font-mono);color:var(--clay);
+             background:rgba(217,119,87,.08);padding:2px 6px;
+             border-radius:var(--r-xs);display:inline-block;margin-bottom:var(--sp-2)}
+  .wt-commit{font:12px/1.5 var(--font-sans);color:var(--gray-500);
+             white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .wt-commit .hash{font-family:var(--font-mono);color:var(--gray-700)}
+  .wt-footer{display:flex;align-items:center;justify-content:space-between;
+             margin-top:var(--sp-3);padding-top:var(--sp-2);
+             border-top:1px solid var(--gray-150)}
+  .wt-jira-chips{display:flex;flex-wrap:wrap;gap:4px}
+  .jira-chip{font:500 11px var(--font-mono);padding:2px 6px;
+             border-radius:var(--r-xs);background:var(--info);color:var(--white);
+             text-decoration:none;cursor:pointer}
+  .jira-chip:hover{background:var(--slate);color:var(--white)}
+  .td-docs-badge{font:500 11px var(--font-sans);padding:2px 8px;
+                 border-radius:var(--r-xs);background:var(--olive);color:var(--white)}
+
+  /* ── Sprint board ── */
+  .sprint-board{display:grid;grid-template-columns:1fr 1fr 1fr;gap:var(--sp-4)}
+  .sprint-col{background:var(--white);border:1px solid var(--gray-300);
+              border-radius:var(--r-md);overflow:hidden;box-shadow:var(--shadow-sm)}
+  .sprint-col-header{padding:var(--sp-3) var(--sp-4);font:500 13px var(--font-sans);
+                     text-transform:uppercase;letter-spacing:.04em;
+                     display:flex;align-items:center;justify-content:space-between}
+  .col-todo   .sprint-col-header{background:var(--gray-150);color:var(--gray-700)}
+  .col-ip     .sprint-col-header{background:rgba(217,119,87,.12);color:#9B4E28}
+  .col-done   .sprint-col-header{background:rgba(120,140,93,.12);color:#4A5E35}
+  .sprint-col-body{padding:var(--sp-2)}
+  .col-count{font:500 12px var(--font-mono);padding:1px 8px;border-radius:10px;
+             background:rgba(0,0,0,.08)}
+
+  /* ── JIRA ticket cards ── */
+  .ticket-card{border:1px solid var(--gray-300);border-radius:var(--r-sm);
+               padding:var(--sp-3) var(--sp-4);margin-bottom:var(--sp-2);
+               background:var(--ivory);transition:box-shadow .15s,border-color .15s;
+               cursor:default}
+  .ticket-card.clickable{cursor:pointer}
+  .ticket-card.clickable:hover{box-shadow:var(--shadow-md);border-color:var(--clay)}
+  .ticket-card.clickable:hover .ticket-key{color:var(--clay)}
+  .ticket-key{font:500 12px var(--font-mono);color:var(--info);margin-bottom:4px;
+              text-decoration:none;display:block}
+  .ticket-summary{font:430 13px/1.45 var(--font-sans);color:var(--slate);
+                  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
+                  overflow:hidden}
+  .ticket-meta{display:flex;align-items:center;gap:var(--sp-2);margin-top:var(--sp-2);
+               flex-wrap:wrap}
+  .badge{display:inline-block;font:500 11px/1.4 var(--font-sans);
+         padding:1px 7px;border-radius:var(--r-xs);text-transform:uppercase;
+         letter-spacing:.03em;white-space:nowrap}
+  .badge-type-bug    {background:#FDE8E8;color:var(--danger)}
+  .badge-type-task   {background:#E8EEF5;color:var(--info)}
+  .badge-type-story  {background:#EAF0E4;color:var(--olive)}
+  .badge-type-default{background:var(--gray-150);color:var(--gray-700)}
+  .badge-prio        {background:var(--gray-150);color:var(--gray-700)}
+  .ticket-updated    {font:12px var(--font-mono);color:var(--gray-500);margin-left:auto}
+
+  /* ── Loading / error states ── */
+  .loading-state{text-align:center;padding:var(--sp-7);color:var(--gray-500)}
+  .loading-dot{display:inline-block;animation:blink 1.2s ease-in-out infinite}
+  .loading-dot:nth-child(2){animation-delay:.2s}
+  .loading-dot:nth-child(3){animation-delay:.4s}
+  @keyframes blink{0%,80%,100%{opacity:.2}40%{opacity:1}}
+  .error-state{background:#FDE8E8;border:1px solid #F0C0C0;border-radius:var(--r-sm);
+               padding:var(--sp-4);color:var(--danger);font-size:14px}
+  .empty-col{text-align:center;padding:var(--sp-5);color:var(--gray-500);font-size:13px}
+
+  /* ── Responsive ── */
+  @media(max-width:768px){
+    .sprint-board{grid-template-columns:1fr}
+    .worktree-grid{grid-template-columns:1fr}
+    .header{flex-direction:column;align-items:flex-start;gap:var(--sp-3)}
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="header-title">Dev Workbench</div>
+    <div class="header-meta">
+      <span id="last-updated" class="last-updated">Loading…</span>
+    </div>
+  </div>
+  <div style="display:flex;gap:8px;align-items:center">
+    <span id="refresh-status" style="font-size:12px;color:var(--gray-500)"></span>
+    <button class="btn-refresh" id="btn-refresh" onclick="refreshData()">
+      ↻ Refresh
+    </button>
+  </div>
+</div>
+
+<!-- ── Worktrees ──────────────────────────────────────────────────────────── -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-title">Worktrees</div>
+    <span class="section-count" id="wt-count">—</span>
+  </div>
+  <div id="worktree-container">
+    <div class="loading-state">
+      <span class="loading-dot">●</span>
+      <span class="loading-dot">●</span>
+      <span class="loading-dot">●</span>
+    </div>
+  </div>
+</div>
+
+<!-- ── Sprint Board ───────────────────────────────────────────────────────── -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-title">Active Sprint</div>
+    <span class="section-count" id="sprint-count">—</span>
+  </div>
+  <div class="sprint-board">
+    <div class="sprint-col col-todo">
+      <div class="sprint-col-header">
+        To Do <span class="col-count" id="todo-count">0</span>
+      </div>
+      <div class="sprint-col-body" id="col-todo">
+        <div class="loading-state" style="padding:24px 0">
+          <span class="loading-dot">●</span>
+          <span class="loading-dot">●</span>
+          <span class="loading-dot">●</span>
+        </div>
+      </div>
+    </div>
+    <div class="sprint-col col-ip">
+      <div class="sprint-col-header">
+        In Progress <span class="col-count" id="ip-count">0</span>
+      </div>
+      <div class="sprint-col-body" id="col-ip">
+        <div class="loading-state" style="padding:24px 0">
+          <span class="loading-dot">●</span>
+          <span class="loading-dot">●</span>
+          <span class="loading-dot">●</span>
+        </div>
+      </div>
+    </div>
+    <div class="sprint-col col-done">
+      <div class="sprint-col-header">
+        Done <span class="col-count" id="done-count">0</span>
+      </div>
+      <div class="sprint-col-body" id="col-done">
+        <div class="loading-state" style="padding:24px 0">
+          <span class="loading-dot">●</span>
+          <span class="loading-dot">●</span>
+          <span class="loading-dot">●</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const BASE = window.location.pathname.replace(/\/[^/]*$/, '');
+const DATA = BASE + '/data';
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+function relativeTime(dateStr) {
+  if (!dateStr) return '';
+  const diff = (Date.now() - new Date(dateStr)) / 1000;
+  if (diff < 60)   return 'just now';
+  if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+  if (diff < 86400)return Math.floor(diff / 3600) + 'h ago';
+  return Math.floor(diff / 86400) + 'd ago';
+}
+
+function typeBadgeClass(type) {
+  const t = (type || '').toLowerCase();
+  if (t === 'bug')   return 'badge-type-bug';
+  if (t === 'task')  return 'badge-type-task';
+  if (t === 'story') return 'badge-type-story';
+  return 'badge-type-default';
+}
+
+function escHtml(s) {
+  return String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Worktrees ──────────────────────────────────────────────────────────────
+function renderWorktrees(data) {
+  const container = document.getElementById('worktree-container');
+  document.getElementById('wt-count').textContent = data.length + ' worktree' + (data.length !== 1 ? 's' : '');
+
+  if (!data.length) {
+    container.innerHTML = '<div class="error-state">No matching worktrees found in ~/workspace/.</div>';
+    return;
+  }
+
+  container.innerHTML = '<div class="worktree-grid">' +
+    data.map(w => {
+      const chips = (w.jira_ids || []).map(id =>
+        `<a class="jira-chip" href="jira-detail.html?id=${escHtml(id)}">${escHtml(id)}</a>`
+      ).join('');
+      const tdBadge = w.has_td_docs
+        ? '<span class="td-docs-badge">td-docs</span>' : '';
+      const commitMsg = (w.last_commit && w.last_commit.message) || '';
+      const commitHash = (w.last_commit && w.last_commit.hash) || '';
+      const commitDate = (w.last_commit && w.last_commit.date) || '';
+
+      return `
+        <div class="worktree-card">
+          <div class="wt-name">${escHtml(w.name)}</div>
+          <div class="wt-branch">${escHtml(w.branch)}</div>
+          <div class="wt-commit">
+            <span class="hash">${escHtml(commitHash)}</span>
+            ${commitMsg ? ' · ' + escHtml(commitMsg.slice(0, 60)) + (commitMsg.length > 60 ? '…' : '') : ''}
+          </div>
+          <div class="wt-footer">
+            <div class="wt-jira-chips">${chips || '<span style="font-size:12px;color:var(--gray-500)">no linked tickets</span>'}</div>
+            ${tdBadge}
+          </div>
+        </div>`;
+    }).join('') + '</div>';
+}
+
+// ── Ticket card ────────────────────────────────────────────────────────────
+function renderTicketCard(ticket, clickable) {
+  const href = clickable ? `jira-detail.html?id=${escHtml(ticket.key)}` : null;
+  const typeClass = typeBadgeClass(ticket.type);
+  const updated = relativeTime(ticket.updated);
+
+  return `
+    <div class="ticket-card ${clickable ? 'clickable' : ''}"
+         ${clickable ? `onclick="location.href='${href}'"` : ''}>
+      <a class="ticket-key"
+         href="${escHtml(ticket.url || '#')}"
+         onclick="event.stopPropagation()"
+         target="_blank">${escHtml(ticket.key)}</a>
+      <div class="ticket-summary">${escHtml(ticket.summary)}</div>
+      <div class="ticket-meta">
+        <span class="badge ${typeClass}">${escHtml(ticket.type || 'ticket')}</span>
+        ${ticket.priority && ticket.priority !== 'None'
+          ? `<span class="badge badge-prio">${escHtml(ticket.priority)}</span>` : ''}
+        ${updated ? `<span class="ticket-updated">${updated}</span>` : ''}
+      </div>
+    </div>`;
+}
+
+// ── Sprint board ───────────────────────────────────────────────────────────
+function renderSprint(data) {
+  const total = (data.todo||[]).length + (data.in_progress||[]).length + (data.done||[]).length;
+  document.getElementById('sprint-count').textContent = total + ' ticket' + (total !== 1 ? 's' : '');
+  document.getElementById('todo-count').textContent = (data.todo||[]).length;
+  document.getElementById('ip-count').textContent   = (data.in_progress||[]).length;
+  document.getElementById('done-count').textContent = (data.done||[]).length;
+
+  function fillCol(id, tickets, clickable) {
+    const el = document.getElementById(id);
+    if (!tickets || !tickets.length) {
+      el.innerHTML = '<div class="empty-col">No tickets</div>';
+      return;
+    }
+    el.innerHTML = tickets.map(t => renderTicketCard(t, clickable)).join('');
+  }
+
+  fillCol('col-todo', data.todo,        false);
+  fillCol('col-ip',   data.in_progress, true);
+  fillCol('col-done', data.done,        true);
+}
+
+// ── Load data ──────────────────────────────────────────────────────────────
+async function loadAll() {
+  try {
+    const [metaRes, wtRes, sprintRes] = await Promise.all([
+      fetch(DATA + '/meta.json?t=' + Date.now()),
+      fetch(DATA + '/worktrees.json?t=' + Date.now()),
+      fetch(DATA + '/sprint.json?t=' + Date.now()),
+    ]);
+
+    if (metaRes.ok) {
+      const meta = await metaRes.json();
+      const updated = new Date(meta.last_updated);
+      document.getElementById('last-updated').textContent =
+        'Last updated ' + relativeTime(meta.last_updated) +
+        ' (' + updated.toLocaleTimeString() + ')';
+    }
+
+    if (wtRes.ok) {
+      renderWorktrees(await wtRes.json());
+    } else {
+      document.getElementById('worktree-container').innerHTML =
+        '<div class="error-state">Could not load worktrees.json. Run update-all.sh first.</div>';
+    }
+
+    if (sprintRes.ok) {
+      renderSprint(await sprintRes.json());
+    } else {
+      ['col-todo','col-ip','col-done'].forEach(id => {
+        document.getElementById(id).innerHTML =
+          '<div class="error-state">Could not load sprint.json. Run update-all.sh first.</div>';
+      });
+    }
+  } catch (e) {
+    document.getElementById('worktree-container').innerHTML =
+      `<div class="error-state">Load error: ${escHtml(e.message)}</div>`;
+  }
+}
+
+// ── Refresh button (hint: runs server-side; not available in pure static) ──
+function refreshData() {
+  const btn = document.getElementById('btn-refresh');
+  const status = document.getElementById('refresh-status');
+  btn.classList.add('loading');
+  btn.textContent = '↻ Refreshing…';
+  status.textContent = 'Run scripts/update-all.sh to refresh data';
+  setTimeout(() => {
+    btn.classList.remove('loading');
+    btn.textContent = '↻ Refresh';
+    loadAll();
+  }, 800);
+}
+
+loadAll();
+</script>
+</body>
+</html>
