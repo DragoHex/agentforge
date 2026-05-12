@@ -100,11 +100,26 @@
   /* ── JIRA ticket cards ── */
   .ticket-card{border:1px solid var(--gray-300);border-radius:var(--r-sm);
                padding:var(--sp-3) var(--sp-4);margin-bottom:var(--sp-2);
-               background:var(--ivory);transition:box-shadow .15s,border-color .15s;
-               cursor:default}
-  .ticket-card.clickable{cursor:pointer}
+               background:var(--ivory);transition:box-shadow .15s,border-color .15s,opacity .15s;
+               cursor:grab}
+  .ticket-card:active{cursor:grabbing}
+  .ticket-card.clickable{cursor:grab}
   .ticket-card.clickable:hover{box-shadow:var(--shadow-md);border-color:var(--clay)}
   .ticket-card.clickable:hover .ticket-key{color:var(--clay)}
+  /* ── Drag-and-drop states ── */
+  .ticket-card{cursor:default}
+  .ticket-card.clickable{cursor:default}
+  .ticket-drag-body{cursor:grab;user-select:none}
+  .ticket-drag-body:active{cursor:grabbing}
+  .ticket-card.dragging{opacity:.35;transform:rotate(1.5deg)}
+  .ticket-card.updating{opacity:.5;pointer-events:none}
+  .sprint-col-body.drag-over{outline:2px dashed var(--clay);outline-offset:-2px;
+                              background:rgba(217,119,87,.06);border-radius:var(--r-sm)}
+  .col-todo .sprint-col-body.drag-over{outline-color:var(--gray-500);background:rgba(0,0,0,.03)}
+  .col-done .sprint-col-body.drag-over{outline-color:#5a8a40;background:rgba(120,140,93,.07)}
+  #transition-error{display:none;background:#FDE8E8;border:1px solid #F0C0C0;
+                    border-radius:var(--r-sm);padding:var(--sp-3) var(--sp-4);
+                    color:var(--danger);font-size:13px;margin-bottom:var(--sp-3)}
   .ticket-key{font:500 12px var(--font-mono);color:var(--info);margin-bottom:4px;
               text-decoration:none;display:block}
   .ticket-summary{font:430 13px/1.45 var(--font-sans);color:var(--slate);
@@ -172,17 +187,19 @@
 </div>
 
 <!-- ── Sprint Board ───────────────────────────────────────────────────────── -->
-<div class="section">
+<div class="section" style="margin-top:var(--sp-7)">
   <div class="section-header">
     <div class="section-title">Active Sprint</div>
     <span class="section-count" id="sprint-count">—</span>
   </div>
+  <div id="transition-error" style="display:none"></div>
   <div class="sprint-board">
     <div class="sprint-col col-todo">
       <div class="sprint-col-header">
         To Do <span class="col-count" id="todo-count">0</span>
       </div>
-      <div class="sprint-col-body" id="col-todo">
+      <div class="sprint-col-body" id="col-todo" data-col="todo"
+           ondragover="colDragOver(event)" ondragleave="colDragLeave(event)" ondrop="colDrop(event)">
         <div class="loading-state" style="padding:24px 0">
           <span class="loading-dot">●</span>
           <span class="loading-dot">●</span>
@@ -194,7 +211,8 @@
       <div class="sprint-col-header">
         In Progress <span class="col-count" id="ip-count">0</span>
       </div>
-      <div class="sprint-col-body" id="col-ip">
+      <div class="sprint-col-body" id="col-ip" data-col="in_progress"
+           ondragover="colDragOver(event)" ondragleave="colDragLeave(event)" ondrop="colDrop(event)">
         <div class="loading-state" style="padding:24px 0">
           <span class="loading-dot">●</span>
           <span class="loading-dot">●</span>
@@ -206,7 +224,8 @@
       <div class="sprint-col-header">
         Done <span class="col-count" id="done-count">0</span>
       </div>
-      <div class="sprint-col-body" id="col-done">
+      <div class="sprint-col-body" id="col-done" data-col="done"
+           ondragover="colDragOver(event)" ondragleave="colDragLeave(event)" ondrop="colDrop(event)">
         <div class="loading-state" style="padding:24px 0">
           <span class="loading-dot">●</span>
           <span class="loading-dot">●</span>
@@ -287,20 +306,31 @@ function renderTicketCard(ticket, clickable) {
   const href = clickable ? `jira-detail.html?id=${escHtml(ticket.key)}` : null;
   const typeClass = typeBadgeClass(ticket.type);
   const updated = relativeTime(ticket.updated);
+  const key = escHtml(ticket.key);
 
+  // The drag handle is the body (summary + meta), NOT the heading link.
+  // This gives a large, reliable drop zone without fighting the anchor's
+  // native drag or the onclick threshold on the outer div.
   return `
     <div class="ticket-card ${clickable ? 'clickable' : ''}"
-         ${clickable ? `onclick="location.href='${href}'"` : ''}>
+         ${clickable ? `onclick="_cardClick(event,'${href}')"` : ''}>
       <a class="ticket-key"
          href="${escHtml(ticket.url || '#')}"
+         draggable="false"
          onclick="event.stopPropagation()"
-         target="_blank">${escHtml(ticket.key)}</a>
-      <div class="ticket-summary">${escHtml(ticket.summary)}</div>
-      <div class="ticket-meta">
-        <span class="badge ${typeClass}">${escHtml(ticket.type || 'ticket')}</span>
-        ${ticket.priority && ticket.priority !== 'None'
-          ? `<span class="badge badge-prio">${escHtml(ticket.priority)}</span>` : ''}
-        ${updated ? `<span class="ticket-updated">${updated}</span>` : ''}
+         target="_blank">${key}</a>
+      <div class="ticket-drag-body"
+           draggable="true"
+           data-key="${key}"
+           ondragstart="_dragStart(event)"
+           ondragend="_dragEnd(event)">
+        <div class="ticket-summary">${escHtml(ticket.summary)}</div>
+        <div class="ticket-meta">
+          <span class="badge ${typeClass}">${escHtml(ticket.type || 'ticket')}</span>
+          ${ticket.priority && ticket.priority !== 'None'
+            ? `<span class="badge badge-prio">${escHtml(ticket.priority)}</span>` : ''}
+          ${updated ? `<span class="ticket-updated">${updated}</span>` : ''}
+        </div>
       </div>
     </div>`;
 }
@@ -325,6 +355,154 @@ function renderSprint(data) {
   fillCol('col-todo', data.todo,        false);
   fillCol('col-ip',   data.in_progress, true);
   fillCol('col-done', data.done,        true);
+}
+
+// ── Drag-and-drop ──────────────────────────────────────────────────────────
+let _dragKey = null;
+let _dragSourceColId = null;
+let _didDrag = false;   // distinguishes a real drag from a click
+
+// Exposed for Playwright tests — sets the internal drag-state variables.
+function _testSetDragState(key, srcColId) { _dragKey = key; _dragSourceColId = srcColId; }
+
+function _cardClick(e, href) {
+  if (_didDrag) { _didDrag = false; return; }
+  location.href = href;
+}
+
+function _dragStart(e) {
+  const body = e.currentTarget;                          // .ticket-drag-body
+  const card = body.closest('.ticket-card');
+  _dragKey = body.dataset.key;
+  _dragSourceColId = body.closest('.sprint-col-body')?.id || null;
+  _didDrag = false;
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', _dragKey);
+
+  // Use the full card as the drag ghost so the floating preview is complete.
+  // setDragImage must be called synchronously before the dragging class dims it.
+  if (card) {
+    const rect = card.getBoundingClientRect();
+    // Offset = cursor position relative to the card's top-left corner.
+    const offsetX = Math.min(e.clientX - rect.left, rect.width  - 1);
+    const offsetY = Math.min(e.clientY - rect.top,  rect.height - 1);
+    e.dataTransfer.setDragImage(card, offsetX, offsetY);
+  }
+
+  // Dim the in-place card AFTER the ghost is captured.
+  requestAnimationFrame(() => card && card.classList.add('dragging'));
+}
+
+function _dragEnd(e) {
+  const card = e.currentTarget.closest('.ticket-card');
+  if (card) card.classList.remove('dragging');
+  document.querySelectorAll('.sprint-col-body.drag-over')
+    .forEach(c => c.classList.remove('drag-over'));
+  _didDrag = true;
+}
+
+function colDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  e.currentTarget.classList.add('drag-over');
+}
+
+function colDragLeave(e) {
+  if (!e.currentTarget.contains(e.relatedTarget)) {
+    e.currentTarget.classList.remove('drag-over');
+  }
+}
+
+async function colDrop(e) {
+  e.preventDefault();
+  const targetColEl  = e.currentTarget;
+  targetColEl.classList.remove('drag-over');
+
+  const targetColId  = targetColEl.id;
+  const targetStatus = targetColEl.dataset.col;   // "todo" | "in_progress" | "done"
+  const ticketKey    = _dragKey;
+
+  // Same column → no-op, no backend call
+  if (!ticketKey || targetColId === _dragSourceColId) return;
+
+  const body = document.querySelector(`.ticket-drag-body[data-key="${ticketKey}"]`);
+  const card = body ? body.closest('.ticket-card') : null;
+  if (!card) return;
+
+  const origColEl   = document.getElementById(_dragSourceColId);
+  const origNextSib = card.nextElementSibling;   // preserve exact slot for rollback
+
+  // ── 1. OPTIMISTIC: move card to target column immediately ──────────────────
+  targetColEl.appendChild(card);
+  _syncColEmpty(targetColEl);
+  _syncColEmpty(origColEl);
+  _updateSprintCounts();
+
+  document.getElementById('transition-error').style.display = 'none';
+
+  // ── 2. BACKGROUND: call Jira API asynchronously ────────────────────────────
+  try {
+    const r   = await fetch(
+      `/workbench/api/transition-ticket?ticket_id=${encodeURIComponent(ticketKey)}&target_status=${encodeURIComponent(targetStatus)}`,
+      { method: 'POST' }
+    );
+    const res = await r.json();
+    if (!res.ok) {
+      // ── 3a. ROLLBACK: API reported failure ───────────────────────────────────
+      _rollbackCard(card, origColEl, origNextSib, targetColEl);
+      const msg = (res.output || '').split('\n').find(l => l.startsWith('ERROR')) || 'Script failed';
+      _showTransitionError(`${ticketKey}: ${msg}`);
+    }
+    // On success the card is already where the user put it — nothing else needed.
+  } catch (_) {
+    // ── 3b. ROLLBACK: network/server error ──────────────────────────────────
+    _rollbackCard(card, origColEl, origNextSib, targetColEl);
+    _showTransitionError(`${ticketKey}: server offline — run scripts/start-server.sh`);
+  }
+}
+
+// Move card back to its original position and restore UI state.
+function _rollbackCard(card, origColEl, origNextSib, fromColEl) {
+  if (origNextSib) origColEl.insertBefore(card, origNextSib);
+  else             origColEl.appendChild(card);
+  _syncColEmpty(origColEl);
+  _syncColEmpty(fromColEl);
+  _updateSprintCounts();
+  // Brief red outline signals the rollback to the user.
+  card.style.outline = '2px solid var(--danger)';
+  setTimeout(() => { card.style.outline = ''; }, 1800);
+}
+
+// Add or remove the "No tickets" placeholder for a column.
+function _syncColEmpty(colEl) {
+  if (!colEl) return;
+  const hasCards = colEl.querySelector('.ticket-card');
+  const emptyDiv = colEl.querySelector('.empty-col');
+  if (!hasCards && !emptyDiv) {
+    colEl.insertAdjacentHTML('beforeend', '<div class="empty-col">No tickets</div>');
+  } else if (hasCards && emptyDiv) {
+    emptyDiv.remove();
+  }
+}
+
+// Re-count tickets in each column and update header badges.
+function _updateSprintCounts() {
+  const cols = { 'col-todo': 'todo-count', 'col-ip': 'ip-count', 'col-done': 'done-count' };
+  let total = 0;
+  for (const [id, cntId] of Object.entries(cols)) {
+    const n = document.querySelectorAll(`#${id} .ticket-card`).length;
+    document.getElementById(cntId).textContent = n;
+    total += n;
+  }
+  const sc = document.getElementById('sprint-count');
+  if (sc) sc.textContent = total + ' ticket' + (total !== 1 ? 's' : '');
+}
+
+function _showTransitionError(msg) {
+  const el = document.getElementById('transition-error');
+  el.textContent = 'Status update failed — ' + msg;
+  el.style.display = 'block';
+  setTimeout(() => { el.style.display = 'none'; }, 7000);
 }
 
 // ── Load data ──────────────────────────────────────────────────────────────

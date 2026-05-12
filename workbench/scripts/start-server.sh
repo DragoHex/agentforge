@@ -3,7 +3,9 @@
 
 set -euo pipefail
 
-WORKBENCH_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+# Always use the Apache-served canonical location so the server writes
+# to the same directory that the browser fetches data from.
+WORKBENCH_DIR="/var/www/html/workbench"
 SERVER_DIR="$WORKBENCH_DIR/server"
 BINARY="$SERVER_DIR/workbench-server"
 PIDFILE="/tmp/workbench-server.pid"
