@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
-# fetch-jira-detail.sh <AV-ID> | --all
+# fetch-jira-detail.sh <AV-ID> [--worktree <name>] | --all
 # Fetches per-ticket detail: td-docs content, GitHub PR status, DSR/DFR status.
 # Outputs: /var/www/html/workbench/data/jira/<AV-ID>.json
+#
+# --worktree <name>  Override auto-detection; use this worktree name from ~/workspace/
 
 set -euo pipefail
 
@@ -15,10 +17,11 @@ GH_TOKEN=$(grep -A5 "${GH_HOST}:" "$HOME/.config/gh/hosts.yml" 2>/dev/null \
 
 process_ticket() {
     local JIRA_ID="$1"
+    local FORCE_WORKTREE="${2:-}"   # optional: worktree name override
     local OUT_FILE="$DATA_DIR/jira/${JIRA_ID}.json"
     mkdir -p "$DATA_DIR/jira"
 
-    echo "Processing $JIRA_ID..."
+    echo "Processing $JIRA_ID${FORCE_WORKTREE:+ (worktree: $FORCE_WORKTREE)}..."
 
     # ── Temp dir for intermediate data ────────────────────────────────────────
     TMPDIR_TICKET=$(mktemp -d /tmp/workbench_XXXXXX)
@@ -28,25 +31,145 @@ process_ticket() {
     WORKTREE_PATH=""
     WORKTREE_NAME=""
     BRANCH=""
-    for dir in "$WORKSPACE"/*/; do
-        [[ -d "$dir/.git" ]] || [[ -f "$dir/.git" ]] || continue
-        remote=$(git -C "$dir" remote get-url origin 2>/dev/null || echo "")
-        [[ "$remote" == "$TARGET_REMOTE" ]] || continue
-        b=$(git -C "$dir" branch --show-current 2>/dev/null || echo "")
-        td_file="$dir/.cursor/td-docs/${JIRA_ID}.md"
-        if echo "$b" | grep -qiE "${JIRA_ID}" || [[ -f "$td_file" ]]; then
-            WORKTREE_PATH="$dir"
-            WORKTREE_NAME=$(basename "$dir")
-            BRANCH="$b"
-            break
+
+    if [[ -n "$FORCE_WORKTREE" ]]; then
+        # Use explicitly chosen worktree
+        forced_dir="$WORKSPACE/$FORCE_WORKTREE"
+        if [[ -d "$forced_dir" ]]; then
+            remote=$(git -C "$forced_dir" remote get-url origin 2>/dev/null || echo "")
+            if [[ "$remote" == "$TARGET_REMOTE" ]]; then
+                WORKTREE_PATH="$forced_dir/"
+                WORKTREE_NAME="$FORCE_WORKTREE"
+                BRANCH=$(git -C "$forced_dir" branch --show-current 2>/dev/null || echo "")
+            else
+                echo "  WARNING: $FORCE_WORKTREE remote does not match avi-dev — using anyway"
+                WORKTREE_PATH="$forced_dir/"
+                WORKTREE_NAME="$FORCE_WORKTREE"
+                BRANCH=$(git -C "$forced_dir" branch --show-current 2>/dev/null || echo "")
+            fi
+        else
+            echo "  ERROR: Worktree $FORCE_WORKTREE not found at $forced_dir"
         fi
-    done
+    else
+        # Auto-detect: match by branch name or td-docs file presence
+        for dir in "$WORKSPACE"/*/; do
+            [[ -d "$dir/.git" ]] || [[ -f "$dir/.git" ]] || continue
+            remote=$(git -C "$dir" remote get-url origin 2>/dev/null || echo "")
+            [[ "$remote" == "$TARGET_REMOTE" ]] || continue
+            b=$(git -C "$dir" branch --show-current 2>/dev/null || echo "")
+            wt_n=$(basename "$dir")
+            td_file="$HOME/.dev-work/td-docs/$wt_n/${JIRA_ID}.md"
+            if echo "$b" | grep -qiE "${JIRA_ID}" || [[ -f "$td_file" ]]; then
+                WORKTREE_PATH="$dir"
+                WORKTREE_NAME=$(basename "$dir")
+                BRANCH="$b"
+                break
+            fi
+        done
+    fi
+
+    # ── 1b. Create/link td-docs ───────────────────────────────────────────────
+    # Canonical location : ~/.dev-work/td-docs/<worktree>/<jira_id>.md
+    # Symlink location   : <worktree>/.cursor/td-docs/<jira_id>.md -> canonical
+    if [[ -n "$WORKTREE_PATH" ]]; then
+        _canonical_dir="$HOME/.dev-work/td-docs/$WORKTREE_NAME"
+        _canonical="$_canonical_dir/${JIRA_ID}.md"
+        _link_dir="$WORKTREE_PATH/.cursor/td-docs"
+        _link="$_link_dir/${JIRA_ID}.md"
+
+        mkdir -p "$_canonical_dir"
+        mkdir -p "$_link_dir"
+
+        # ── Phase 1: resolve worktree file into canonical ─────────────────────
+        if [[ -L "$_link" ]]; then
+            # Remove any existing symlink — will be replaced with a hard link
+            rm -f "$_link"
+            echo "  Removed old symlink (replacing with hard link)"
+        elif [[ -f "$_link" ]]; then
+            _li=$(stat -c '%i' "$_link")
+            _ci=$(stat -c '%i' "$_canonical" 2>/dev/null || echo "none")
+            if [[ "$_li" == "$_ci" ]]; then
+                : # already the same inode — correct hard link, nothing to do
+            elif [[ ! -f "$_canonical" ]]; then
+                # Scenario A: canonical missing → move worktree file there
+                mv "$_link" "$_canonical"
+                echo "  Migrated td-docs: $_link -> $_canonical"
+            else
+                # Scenario B: canonical exists → it wins; drop the worktree copy
+                rm -f "$_link"
+                echo "  Removed duplicate in worktree (canonical already exists)"
+            fi
+        fi
+
+        # ── Phase 2: create canonical from template if still missing ──────────
+        if [[ ! -f "$_canonical" ]]; then
+            cat > "$_canonical" <<TDTEMPLATE
+# ${JIRA_ID}
+
+## Approaches
+
+### Approach 1: <Name>
+<description>
+
+Pros:
+- 
+
+Cons:
+- 
+
+### Approach 2: <Name>
+<description>
+
+Pros:
+- 
+
+Cons:
+- 
+
+### Approach 3: <Name>
+<description>
+
+Pros:
+- 
+
+Cons:
+- 
+
+## Implementation Plan
+
+### Milestones
+1. 
+
+### Risk Table
+| Risk | Severity | Mitigation |
+|------|----------|------------|
+|      | LOW      |            |
+
+## PR Annotations
+
+<!-- Notes about the PR, key decisions, review comments -->
+
+TDTEMPLATE
+            echo "  Created td-docs: $_canonical"
+        fi
+
+        # ── Phase 3: ensure hard link in worktree points to canonical inode ───
+        if [[ ! -f "$_link" ]]; then
+            ln "$_canonical" "$_link"
+            echo "  Hard linked: $_link"
+        elif [[ "$(stat -c '%i' "$_link")" != "$(stat -c '%i' "$_canonical")" ]]; then
+            rm -f "$_link"
+            ln "$_canonical" "$_link"
+            echo "  Fixed hard link: $_link"
+        fi
+    fi
 
     # ── 2. Parse td-docs markdown ──────────────────────────────────────────────
     TD_DOCS_PATH=""
     TD_DOCS_EXISTS="false"
     if [[ -n "$WORKTREE_PATH" ]]; then
-        cand="$WORKTREE_PATH/.cursor/td-docs/${JIRA_ID}.md"
+        # Read from canonical path directly (symlink also works via [[ -f ]])
+        cand="$HOME/.dev-work/td-docs/$WORKTREE_NAME/${JIRA_ID}.md"
         if [[ -f "$cand" ]]; then
             TD_DOCS_PATH="$cand"
             TD_DOCS_EXISTS="true"
@@ -58,12 +181,12 @@ text   = open(os.path.join(tmpdir, "td-docs.md")).read()
 
 def extract(heading_pattern):
     m = re.search(
-        r'##\s*' + heading_pattern + r'\s*\n(.*?)(?=\n##\s|\Z)',
+        r'##\s*(?:' + heading_pattern + r')\s*\n(.*?)(?=\n##\s|\Z)',
         text, re.IGNORECASE | re.DOTALL)
     return m.group(1).strip() if m else ''
 
 sections = {
-    'approaches':      extract(r'(Code\s+)?Approaches?'),
+    'approaches':      extract(r'(?:Code\s+)?Approaches?'),
     'impl_plan':       extract(r'Implementation\s+Plan'),
     'pr_annotations':  extract(r'PR\s+Annotations?'),
     'full_text':       text,
@@ -282,6 +405,15 @@ print(' '.join(ids))
         process_ticket "$id"
     done
 else
-    [[ -n "${1:-}" ]] || { echo "Usage: $0 <AV-ID> | --all"; exit 1; }
-    process_ticket "$1"
+    [[ -n "${1:-}" ]] || { echo "Usage: $0 <AV-ID> [--worktree <name>] | --all"; exit 1; }
+    JIRA_ID="${1}"
+    FORCE_WT=""
+    shift
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --worktree) FORCE_WT="${2:-}"; shift 2 ;;
+            *) shift ;;
+        esac
+    done
+    process_ticket "$JIRA_ID" "$FORCE_WT"
 fi

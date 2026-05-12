@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dev Workbench</title>
+<script>(function(){var t=localStorage.getItem('wb-theme');if(t==='dark')document.documentElement.setAttribute('data-theme','dark');}());</script>
 <style>
   :root {
     --ivory:#FAF9F5; --slate:#141413; --clay:#D97757; --olive:#788C5D;
@@ -16,24 +17,37 @@
     --sp-6:32px; --r-xs:4px; --r-sm:8px; --r-md:12px; --r-lg:20px;
     --shadow-sm:0 1px 2px rgba(0,0,0,.06); --shadow-md:0 4px 10px rgba(0,0,0,.08);
   }
+  /* ── Dark mode overrides ── */
+  [data-theme="dark"] {
+    --ivory:#1C1C1A; --slate:#E6E4DE; --oat:#2A2A27; --white:#242421;
+    --gray-150:#2E2E2B; --gray-300:#3D3D3A; --gray-500:#8C8A83; --gray-700:#C2C0B8;
+    --shadow-sm:0 1px 3px rgba(0,0,0,.3); --shadow-md:0 4px 12px rgba(0,0,0,.4);
+  }
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
   body{font:430 16px/1.55 var(--font-sans);color:var(--slate);background:var(--ivory);
        max-width:1200px;margin:0 auto;padding:var(--sp-6) var(--sp-5);
-       -webkit-font-smoothing:antialiased}
+       -webkit-font-smoothing:antialiased;transition:background .2s,color .2s}
 
   /* ── Header ── */
   .header{display:flex;align-items:center;justify-content:space-between;
           margin-bottom:var(--sp-6);padding-bottom:var(--sp-4);
           border-bottom:1px solid var(--gray-300)}
+  .header-left{display:flex;flex-direction:column;gap:4px}
   .header-title{font:500 28px/1.2 var(--font-sans);color:var(--slate)}
-  .header-meta{font-size:13px;color:var(--gray-500);text-align:right}
   .header-meta .last-updated{font:13px var(--font-mono);color:var(--gray-500)}
+  .header-right{display:flex;align-items:center;gap:var(--sp-2)}
   .btn-refresh{display:inline-flex;align-items:center;gap:var(--sp-2);
                font:500 13px var(--font-sans);padding:6px 14px;border:1px solid var(--gray-300);
                border-radius:var(--r-sm);background:var(--white);color:var(--slate);
-               cursor:pointer;transition:background .15s,border-color .15s;text-decoration:none}
+               cursor:pointer;transition:background .15s,border-color .15s}
   .btn-refresh:hover{background:var(--gray-150);border-color:var(--gray-500)}
   .btn-refresh.loading{opacity:.6;pointer-events:none}
+  /* ── Theme toggle ── */
+  .btn-theme{width:36px;height:36px;border-radius:50%;border:1px solid var(--gray-300);
+             background:var(--white);cursor:pointer;font-size:16px;
+             display:flex;align-items:center;justify-content:center;
+             transition:background .15s,border-color .15s,transform .2s}
+  .btn-theme:hover{background:var(--gray-150);transform:rotate(20deg)}
 
   /* ── Section headings ── */
   .section{margin-bottom:var(--sp-7)}
@@ -129,17 +143,16 @@
 <body>
 
 <div class="header">
-  <div>
+  <div class="header-left">
     <div class="header-title">Dev Workbench</div>
     <div class="header-meta">
       <span id="last-updated" class="last-updated">Loading…</span>
     </div>
   </div>
-  <div style="display:flex;gap:8px;align-items:center">
+  <div class="header-right">
     <span id="refresh-status" style="font-size:12px;color:var(--gray-500)"></span>
-    <button class="btn-refresh" id="btn-refresh" onclick="refreshData()">
-      ↻ Refresh
-    </button>
+    <button class="btn-refresh" id="btn-refresh" onclick="refreshData()">↻ Refresh</button>
+    <button class="btn-theme" id="btn-theme" onclick="toggleTheme()" title="Toggle dark mode">☀</button>
   </div>
 </div>
 
@@ -318,9 +331,9 @@ function renderSprint(data) {
 async function loadAll() {
   try {
     const [metaRes, wtRes, sprintRes] = await Promise.all([
-      fetch(DATA + '/meta.json?t=' + Date.now()),
-      fetch(DATA + '/worktrees.json?t=' + Date.now()),
-      fetch(DATA + '/sprint.json?t=' + Date.now()),
+      fetch(DATA + '/meta.json?t='      + Date.now(), { cache: 'no-store' }),
+      fetch(DATA + '/worktrees.json?t=' + Date.now(), { cache: 'no-store' }),
+      fetch(DATA + '/sprint.json?t='    + Date.now(), { cache: 'no-store' }),
     ]);
 
     if (metaRes.ok) {
@@ -352,18 +365,58 @@ async function loadAll() {
   }
 }
 
-// ── Refresh button (hint: runs server-side; not available in pure static) ──
+// ── Dark mode ──────────────────────────────────────────────────────────────
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  const btn = document.getElementById('btn-theme');
+  if (btn) btn.textContent = theme === 'dark' ? '☾' : '☀';
+}
+function toggleTheme() {
+  const cur  = document.documentElement.getAttribute('data-theme') || 'light';
+  const next = cur === 'dark' ? 'light' : 'dark';
+  localStorage.setItem('wb-theme', next);
+  applyTheme(next);
+}
+applyTheme(localStorage.getItem('wb-theme') || 'light');
+
+// Re-apply on bfcache restore (browser back/forward)
+window.addEventListener('pageshow', () =>
+  applyTheme(localStorage.getItem('wb-theme') || 'light'));
+
+// Sync if another page changes the theme while this one is open
+window.addEventListener('storage', e => {
+  if (e.key === 'wb-theme') applyTheme(e.newValue || 'light');
+});
+
+// ── Refresh button ─────────────────────────────────────────────────────────
 function refreshData() {
-  const btn = document.getElementById('btn-refresh');
+  const btn    = document.getElementById('btn-refresh');
   const status = document.getElementById('refresh-status');
   btn.classList.add('loading');
   btn.textContent = '↻ Refreshing…';
-  status.textContent = 'Run scripts/update-all.sh to refresh data';
-  setTimeout(() => {
-    btn.classList.remove('loading');
-    btn.textContent = '↻ Refresh';
-    loadAll();
-  }, 800);
+  status.textContent = 'Running scripts…';
+
+  fetch('/workbench/api/refresh', { method: 'POST' })
+    .then(r => r.json())
+    .then(res => {
+      btn.classList.remove('loading');
+      btn.textContent = '↻ Refresh';
+      if (res.ok) {
+        status.textContent = '✓ Done';
+        loadAll();
+        setTimeout(() => { status.textContent = ''; }, 3000);
+      } else {
+        status.textContent = '✗ Scripts failed — check data/server.log';
+        setTimeout(() => { status.textContent = ''; }, 6000);
+      }
+    })
+    .catch(() => {
+      btn.classList.remove('loading');
+      btn.textContent = '↻ Refresh';
+      status.textContent = 'Server offline — run: bash /var/www/html/workbench/scripts/start-server.sh';
+      loadAll();
+      setTimeout(() => { status.textContent = ''; }, 8000);
+    });
 }
 
 loadAll();

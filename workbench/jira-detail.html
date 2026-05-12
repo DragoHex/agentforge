@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>JIRA Detail — Workbench</title>
+<script>(function(){var t=localStorage.getItem('wb-theme');if(t==='dark')document.documentElement.setAttribute('data-theme','dark');}());</script>
 <style>
   :root {
     --ivory:#FAF9F5; --slate:#141413; --clay:#D97757; --olive:#788C5D;
@@ -17,26 +18,75 @@
     --r-xs:4px; --r-sm:8px; --r-md:12px; --r-lg:20px;
     --shadow-sm:0 1px 2px rgba(0,0,0,.06); --shadow-md:0 4px 10px rgba(0,0,0,.08);
   }
+  /* ── Dark mode overrides ── */
+  [data-theme="dark"] {
+    --ivory:#1C1C1A; --slate:#E6E4DE; --oat:#2A2A27; --white:#242421;
+    --gray-150:#2E2E2B; --gray-300:#3D3D3A; --gray-500:#8C8A83; --gray-700:#C2C0B8;
+    --shadow-sm:0 1px 3px rgba(0,0,0,.3); --shadow-md:0 4px 12px rgba(0,0,0,.4);
+  }
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
   body{font:430 16px/1.55 var(--font-sans);color:var(--slate);background:var(--ivory);
        max-width:1280px;margin:0 auto;padding:var(--sp-5) var(--sp-5);
-       -webkit-font-smoothing:antialiased}
+       -webkit-font-smoothing:antialiased;transition:background .2s,color .2s}
 
   /* ── Top bar ── */
   .topbar{display:flex;align-items:center;gap:var(--sp-3);margin-bottom:var(--sp-4);
-          padding-bottom:var(--sp-3);border-bottom:1px solid var(--gray-300)}
+          padding-bottom:var(--sp-3);border-bottom:1px solid var(--gray-300);flex-wrap:wrap}
+  .topbar-left{display:flex;align-items:center;gap:var(--sp-3);flex:1;min-width:0}
+  .topbar-right{display:flex;align-items:center;gap:var(--sp-2);flex-shrink:0}
   .back-link{font:500 13px var(--font-sans);color:var(--gray-500);text-decoration:none;
              padding:4px 10px;border:1px solid var(--gray-300);border-radius:var(--r-sm);
-             background:var(--white);transition:background .15s}
+             background:var(--white);transition:background .15s;white-space:nowrap}
   .back-link:hover{background:var(--gray-150);color:var(--slate)}
-  .topbar-id{font:500 18px var(--font-mono);color:var(--info)}
+  .topbar-id{font:500 18px var(--font-mono);color:var(--info);white-space:nowrap}
   .topbar-summary{font:430 15px/1.4 var(--font-sans);color:var(--gray-700);
-                  flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+                  min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .status-badge{display:inline-block;font:500 11px var(--font-sans);padding:3px 10px;
-                border-radius:var(--r-xs);text-transform:uppercase;letter-spacing:.04em}
+                border-radius:var(--r-xs);text-transform:uppercase;letter-spacing:.04em;
+                white-space:nowrap}
   .status-ip   {background:rgba(217,119,87,.15);color:#9B4E28}
   .status-todo {background:var(--gray-150);color:var(--gray-700)}
   .status-done {background:rgba(120,140,93,.15);color:#4A5E35}
+
+  /* ── Worktree selector ── */
+  .worktree-selector{display:flex;align-items:center;gap:var(--sp-2);
+                     padding:var(--sp-3) var(--sp-4);margin-bottom:var(--sp-4);
+                     background:var(--white);border:1px solid var(--gray-300);
+                     border-radius:var(--r-md);flex-wrap:wrap}
+  .wt-select-label{font:500 12px var(--font-sans);text-transform:uppercase;
+                   letter-spacing:.04em;color:var(--gray-500);white-space:nowrap}
+  .wt-select{font:430 13px var(--font-sans);padding:5px 10px;
+             border:1px solid var(--gray-300);border-radius:var(--r-sm);
+             background:var(--ivory);color:var(--slate);cursor:pointer;
+             min-width:180px;transition:border-color .15s}
+  .wt-select:focus{outline:none;border-color:var(--clay)}
+  .wt-select option{background:var(--ivory);color:var(--slate)}
+  .btn-fetch{display:inline-flex;align-items:center;gap:6px;
+             font:500 13px var(--font-sans);padding:5px 14px;
+             border:1px solid var(--clay);border-radius:var(--r-sm);
+             background:var(--clay);color:#fff;cursor:pointer;
+             transition:background .15s,opacity .15s;white-space:nowrap}
+  .btn-fetch:hover{background:#C06848}
+  .btn-fetch:disabled{opacity:.5;cursor:not-allowed}
+  .fetch-status{font:12px var(--font-sans);color:var(--gray-500)}
+  .fetch-status.running{color:var(--warning)}
+  .fetch-status.done   {color:var(--olive)}
+  .fetch-status.failed {color:var(--danger)}
+
+  /* ── Progress bar ── */
+  .progress-bar{height:3px;background:var(--gray-150);border-radius:2px;
+                overflow:hidden;margin-top:8px;width:100%}
+  .progress-fill{height:100%;background:var(--clay);border-radius:2px;
+                 width:0;transition:width .3s}
+  .progress-fill.indeterminate{width:40%;animation:slide 1.2s ease-in-out infinite}
+  @keyframes slide{0%{transform:translateX(-200%)}100%{transform:translateX(350%)}}
+
+  /* ── Theme toggle ── */
+  .btn-theme{width:34px;height:34px;border-radius:50%;border:1px solid var(--gray-300);
+             background:var(--white);cursor:pointer;font-size:15px;
+             display:flex;align-items:center;justify-content:center;
+             transition:background .15s,transform .2s}
+  .btn-theme:hover{background:var(--gray-150);transform:rotate(20deg)}
 
   /* ── Ticket meta strip ── */
   .ticket-meta{display:flex;flex-wrap:wrap;gap:var(--sp-4);margin-bottom:var(--sp-5);
@@ -191,10 +241,30 @@
 <body>
 
 <div class="topbar">
-  <a href="index.html" class="back-link">← Back</a>
-  <span class="topbar-id" id="ticket-id">—</span>
-  <span class="topbar-summary" id="ticket-summary">Loading…</span>
-  <span class="status-badge" id="ticket-status"></span>
+  <div class="topbar-left">
+    <a href="index.html" class="back-link">← Back</a>
+    <span class="topbar-id" id="ticket-id">—</span>
+    <span class="topbar-summary" id="ticket-summary">Loading…</span>
+    <span class="status-badge" id="ticket-status"></span>
+  </div>
+  <div class="topbar-right">
+    <button class="btn-theme" id="btn-theme" onclick="toggleTheme()" title="Toggle dark mode">☀</button>
+  </div>
+</div>
+
+<!-- ── Worktree selector ── -->
+<div class="worktree-selector" id="worktree-selector">
+  <span class="wt-select-label">Worktree</span>
+  <select class="wt-select" id="wt-select" onchange="fetchWithWorktree()">
+    <option value="">— select worktree —</option>
+  </select>
+  <button class="btn-fetch" id="btn-fetch" onclick="fetchWithWorktree()" disabled>
+    ↻ Fetch Data
+  </button>
+  <span class="fetch-status" id="fetch-status"></span>
+  <div class="progress-bar" id="progress-bar" style="display:none">
+    <div class="progress-fill indeterminate" id="progress-fill"></div>
+  </div>
 </div>
 
 <div class="ticket-meta" id="ticket-meta"></div>
@@ -651,21 +721,120 @@ function renderMeta(data) {
     </div>`).join('');
 }
 
-// ── Bootstrap ──────────────────────────────────────────────────────────────
-async function init() {
-  const params  = new URLSearchParams(window.location.search);
-  const jiraId  = params.get('id') || '';
+// ── Dark mode ──────────────────────────────────────────────────────────────
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  const btn = document.getElementById('btn-theme');
+  if (btn) btn.textContent = theme === 'dark' ? '☾' : '☀';
+}
+function toggleTheme() {
+  const cur  = document.documentElement.getAttribute('data-theme') || 'light';
+  const next = cur === 'dark' ? 'light' : 'dark';
+  localStorage.setItem('wb-theme', next);
+  applyTheme(next);
+}
+applyTheme(localStorage.getItem('wb-theme') || 'light');
 
-  if (!jiraId) {
-    document.body.innerHTML = '<div style="padding:48px;text-align:center;color:var(--danger)">No JIRA ID in URL. Use ?id=AV-XXXXX</div>';
-    return;
+// Re-apply on bfcache restore (browser back/forward)
+window.addEventListener('pageshow', () =>
+  applyTheme(localStorage.getItem('wb-theme') || 'light'));
+
+// Sync if another page changes the theme while this one is open
+window.addEventListener('storage', e => {
+  if (e.key === 'wb-theme') applyTheme(e.newValue || 'light');
+});
+
+// ── Worktree dropdown ──────────────────────────────────────────────────────
+const API_BASE = '';
+
+async function populateWorktreeDropdown(jiraId) {
+  const sel = document.getElementById('wt-select');
+  const btn = document.getElementById('btn-fetch');
+
+  try {
+    const BASE = window.location.pathname.replace(/\/[^/]*$/, '');
+    const r = await fetch(BASE + '/data/worktrees.json?t=' + Date.now(), { cache: 'no-store' });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const worktrees = await r.json();
+
+    // Rebuild options (keep the leading blank "select…" option)
+    while (sel.options.length > 1) sel.remove(1);
+
+    worktrees.forEach(wt => {
+      const opt = document.createElement('option');
+      opt.value = wt.name;
+      const jiraMatch = (wt.jira_ids || []).includes(jiraId);
+      opt.textContent = wt.name + ' [' + (wt.branch || '?') + ']' + (jiraMatch ? ' ★' : '');
+      if (jiraMatch) opt.style.fontWeight = '600';
+      sel.appendChild(opt);
+    });
+
+    // Pre-select the best match and enable the button
+    const best = worktrees.find(w => (w.jira_ids || []).includes(jiraId));
+    if (best) sel.value = best.name;
+    btn.disabled = false;
+  } catch (e) {
+    document.getElementById('fetch-status').textContent =
+      'Could not load worktrees.json — run: bash scripts/fetch-worktrees.sh';
+    btn.disabled = true;
   }
+}
 
+async function fetchWithWorktree() {
+  const jiraId   = new URLSearchParams(window.location.search).get('id') || '';
+  const worktree = document.getElementById('wt-select').value;
+  const btn      = document.getElementById('btn-fetch');
+  const status   = document.getElementById('fetch-status');
+  const bar      = document.getElementById('progress-bar');
+
+  if (!jiraId) return;
+
+  btn.disabled = true;
+  btn.textContent = '↻ Fetching…';
+  status.className = 'fetch-status running';
+  status.textContent = 'Running script…';
+  bar.style.display = 'block';
+
+  try {
+    let url = `/workbench/api/fetch-ticket?jira_id=${encodeURIComponent(jiraId)}`;
+    if (worktree) url += `&worktree=${encodeURIComponent(worktree)}`;
+
+    const r   = await fetch(url, { method: 'POST' });
+    const res = await r.json();
+    bar.style.display = 'none';
+
+    if (res.ok) {
+      status.className = 'fetch-status done';
+      status.textContent = '✓ Done — loading data…';
+      await loadData(jiraId);
+      status.textContent = '✓ Done';
+      setTimeout(() => { status.textContent = ''; }, 4000);
+    } else {
+      status.className = 'fetch-status failed';
+      status.textContent = '✗ Script failed — check data/server.log';
+    }
+  } catch (e) {
+    bar.style.display = 'none';
+    status.className = 'fetch-status failed';
+    status.textContent = 'Server offline — run: bash /var/www/html/workbench/scripts/start-server.sh';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '↻ Fetch Data';
+  }
+}
+
+// ── Load + render data ──────────────────────────────────────────────────────
+async function loadData(jiraId) {
   const BASE = window.location.pathname.replace(/\/[^/]*$/, '');
   const url  = BASE + '/data/jira/' + jiraId + '.json?t=' + Date.now();
 
+  // Show loading in all panes
+  ['approaches-content','impl-plan-content','pr-annot-content','status-content'].forEach(id => {
+    document.getElementById(id).innerHTML = '<div class="loading-state">Loading…</div>';
+  });
+
   try {
-    const res = await fetch(url);
+    const res = await fetch(url, { cache: 'no-store' });
     if (!res.ok) throw new Error('HTTP ' + res.status + ' — run fetch-jira-detail.sh ' + jiraId);
     const data = await res.json();
 
@@ -674,18 +843,45 @@ async function init() {
     renderImplPlan(data);
     renderPRAnnotations(data);
     renderStatus(data);
+
+    // Update dropdown to reflect the loaded worktree
+    const loadedWt = (data.worktree || {}).name;
+    const sel = document.getElementById('wt-select');
+    if (loadedWt && sel) {
+      for (let i = 0; i < sel.options.length; i++) {
+        if (sel.options[i].value === loadedWt) { sel.selectedIndex = i; break; }
+      }
+    }
   } catch (e) {
     const msg = `<div class="error-state">
       <strong>Could not load data for ${escHtml(jiraId)}</strong><br>
       ${escHtml(e.message)}<br><br>
-      Run: <code>bash /var/www/html/workbench/scripts/fetch-jira-detail.sh ${escHtml(jiraId)}</code>
+      Select a worktree above and click <strong>Fetch Data</strong>, or run:<br>
+      <code>bash /var/www/html/workbench/scripts/fetch-jira-detail.sh ${escHtml(jiraId)}</code>
     </div>`;
     ['approaches-content','impl-plan-content','pr-annot-content','status-content'].forEach(id => {
       document.getElementById(id).innerHTML = msg;
     });
-    document.getElementById('ticket-id').textContent = jiraId;
-    document.getElementById('ticket-summary').textContent = 'Error loading data';
   }
+}
+
+// ── Bootstrap ──────────────────────────────────────────────────────────────
+async function init() {
+  const params = new URLSearchParams(window.location.search);
+  const jiraId = params.get('id') || '';
+
+  if (!jiraId) {
+    document.body.innerHTML = '<div style="padding:48px;text-align:center;color:var(--danger)">No JIRA ID in URL. Use ?id=AV-XXXXX</div>';
+    return;
+  }
+
+  document.getElementById('ticket-id').textContent = jiraId;
+
+  // Load worktree dropdown (async, non-blocking)
+  populateWorktreeDropdown(jiraId);
+
+  // Load existing data
+  await loadData(jiraId);
 }
 
 init();
