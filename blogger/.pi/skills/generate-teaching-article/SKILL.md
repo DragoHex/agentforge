@@ -18,6 +18,11 @@ Check in order. Use the first that exists:
 
 Save to `output/teaching-article.md`. Adhere to every writing constraint in the system prompt.
 
+**Hard rules — enforce throughout every sentence:**
+- No semicolons. No em-dashes (—). Periods and commas only.
+- Vary sentence length drastically: short punchy sentences mixed with longer ones.
+- Active voice. No intro filler. End each section abruptly when the point is made.
+
 ### Required Structure
 
 ```

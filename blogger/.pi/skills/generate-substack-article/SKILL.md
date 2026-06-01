@@ -16,6 +16,11 @@ Check in order. Use the first that exists:
 
 Target: **1500–2500 words**. Adhere to every writing constraint in the system prompt.
 
+**Hard rules — enforce throughout every sentence:**
+- No semicolons. No em-dashes (—). Periods and commas only.
+- Vary sentence length drastically: short punchy sentences mixed with longer ones.
+- Active voice. No intro filler. End abruptly when the point is made.
+
 ### Required Structure
 
 ```
@@ -49,6 +54,16 @@ Target: **1500–2500 words**. Adhere to every writing constraint in the system 
 [Closing: Circle back to the opening scene or number. End on something the reader can
  act on or remember. No summary recap. No moral lesson. Abrupt is fine.]
 ```
+
+## Step 2b: Add References
+
+If the source material contains a references or bibliography section, append a `## References` section at the end of the article. Include only the source paper and any works directly named in the article body. Format each as a markdown link on its own line:
+
+```
+[<Brief Title> White Paper](https://arxiv.org/abs/<id>)
+```
+
+Use arXiv links where available. Omit author lists, venues, and dates. If no references exist in the source, omit this section entirely.
 
 ## Step 3: Generate Visuals
 

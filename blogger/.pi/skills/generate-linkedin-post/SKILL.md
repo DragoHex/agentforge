@@ -17,6 +17,11 @@ Check in order. Use the first that exists:
 
 Target: **150–250 words**. Save to `output/linkedin-post.md`.
 
+**Hard rules — enforce throughout every sentence:**
+- No semicolons. No em-dashes (—). Periods and commas only.
+- Vary sentence length drastically: short punchy sentences mixed with longer ones.
+- Active voice. No intro filler. End abruptly when the point is made.
+
 ### Format Rules
 
 LinkedIn renders plain text, not markdown. Follow these rules exactly:

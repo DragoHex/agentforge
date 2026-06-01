@@ -105,4 +105,15 @@ case "${1:-}" in
     bash "$0" substack
     bash "$0" linkedin
     ;;
+  draft)  # ./run.sh draft substack output/substack-article.md
+    source venv/bin/activate
+    INPUT="${2:-output/substack-article.md}"
+    # Pre-process: mermaid→PNG, markdown→HTML, collect image paths
+    python3 -u .pi/skills/publish-draft/preprocess.py \
+      --input "$INPUT" \
+      --output output/draft-preprocessed.json
+    # Create draft in Arc's existing Substack session (no new browser, no auth needed)
+    python3 -u .pi/skills/publish-draft/publish_substack.py \
+      --preprocessed output/draft-preprocessed.json
+    ;;
 esac

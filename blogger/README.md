@@ -86,14 +86,17 @@ Commands:
   linkedin            Generate LinkedIn post (reads compact-for-linkedin.md)
   validate [files]    Validate mermaid/Excalidraw syntax in output files
   all [file]          Run full pipeline (default source: SkillOpt.pdf)
+  draft [file]        Create a Substack DRAFT from a markdown file (default: output/substack-article.md)
 
 Examples:
   ./run.sh all SkillOpt.pdf
   ./run.sh ingest https://arxiv.org/abs/2310.01848
-  ./run.sh teaching                  # from existing extracted-source.md
-  ./run.sh substack                  # from existing teaching article
-  ./run.sh linkedin                  # from existing substack article
-  ./run.sh validate                  # check all 3 output files
+  ./run.sh teaching                           # from existing extracted-source.md
+  ./run.sh substack                           # from existing teaching article
+  ./run.sh linkedin                           # from existing substack article
+  ./run.sh validate                           # check all 3 output files
+  ./run.sh draft                              # draft substack-article.md
+  ./run.sh draft output/substack-article.md  # draft a specific file
 ```
 
 ### Environment overrides
@@ -174,6 +177,11 @@ Pi checks whether stdout is a TTY before enabling its tool-use mode. When invoke
 
 Open a Pi session and paste these prompts directly:
 
+### Draft to Substack (from existing article)
+```
+Use /skill:publish-draft to create a Substack draft from output/substack-article.md.
+```
+
 ### Full pipeline
 ```
 Run /skill:ingest-content on SkillOpt.pdf, then /skill:generate-teaching-article,
@@ -244,6 +252,37 @@ Creates narrative long-form content with a scene-setting opener, mechanism expla
 
 ### generate-linkedin-post
 Creates a plain-text LinkedIn post (180-250 words). No markdown headers or bold. Writes `output/linkedin-post.md`.
+
+### publish-draft
+Creates a Substack draft from a markdown file using Arc's existing authenticated session. Never publishes.
+
+**Prerequisites:**
+- Arc browser running and logged into `dragohex.substack.com`
+- Python venv activated (handled automatically by `run.sh`)
+
+**What it does:**
+1. Renders any `mermaid` code blocks to PNG via `mmdc` or `mermaid.ink` fallback
+2. Converts the markdown to Substack's Prosemirror JSON format
+3. Strips the title and subtitle from the body (Substack renders them separately above the content)
+4. Uploads local images to Substack's CDN
+5. POSTs to `/api/v1/drafts` — saves as draft only, never publishes
+
+**Invoke via Pi agent:**
+```
+Use /skill:publish-draft to draft output/substack-article.md on Substack.
+```
+
+**Invoke directly:**
+```bash
+./run.sh draft                              # uses output/substack-article.md
+./run.sh draft output/substack-article.md  # explicit path
+```
+
+**Output:** Prints the draft dashboard URL. Arc opens it automatically for review.
+
+**Writing constraints applied before drafting:**
+- No em-dashes or semicolons in the source markdown
+- References section uses plain markdown links: `[<Brief Title> White Paper](https://arxiv.org/abs/<id>)`
 
 ### create-visualization
 Generates visual content, choosing the right tool by content type:
@@ -329,7 +368,41 @@ blogger/
     ├── teaching-article.md
     ├── substack-article.md
     ├── linkedin-post.md
+    ├── draft-preprocessed.json          # intermediate — preprocess.py output
+    ├── draft-assets/                    # mermaid PNGs rendered for drafting
     ├── teaching-visuals/
     ├── substack-visuals/
     └── linkedin-visuals/
 ```
+
+---
+
+## Substack Draft Workflow
+
+```
+markdown file
+     │
+     ▼
+preprocess.py          → renders mermaid blocks to PNG, converts markdown
+     │                   to Prosemirror JSON, collects local image paths
+     ▼
+output/draft-preprocessed.json
+     │
+     ▼
+publish_substack.py    → opens dragohex.substack.com/publish/posts/drafts in Arc
+     │                   uploads images to Substack CDN
+     │                   strips h1 title + h3 subtitle (Substack shows them separately)
+     │                   POSTs Prosemirror JSON to /api/v1/drafts
+     ▼
+Substack draft (never published)
+```
+
+**Key design decisions:**
+
+| Decision | Reason |
+|---|---|
+| Uses Arc's existing session | No auth to manage; Arc is already logged in |
+| Opens `/publish/posts/drafts` not `/publish/post/new` | The "new post" page auto-creates a blank draft on load |
+| Sends Prosemirror JSON, not HTML | Substack's API requires it; raw HTML renders as visible tags |
+| `ensure_ascii=True` + `TextDecoder` in JS | Prevents UTF-8 mojibake through the AppleScript/XHR pipeline |
+| Strips h1 and h3 from body | Substack renders `draft_title` and `draft_subtitle` above the content |
