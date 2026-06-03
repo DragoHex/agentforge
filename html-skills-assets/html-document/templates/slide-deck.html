@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Slide Deck</title>
+<style>
+  :root { --ivory:#FAF9F5; --slate:#141413; --clay:#D97757; --olive:#788C5D; --oat:#E3DACC; --gray-150:#F0EEE6; --gray-300:#D1CFC5; --gray-500:#87867F; --gray-700:#3D3D3A; --white:#FFF; --font-sans:system-ui,-apple-system,sans-serif; --font-mono:ui-monospace,Menlo,monospace; }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{font:430 16px/1.55 var(--font-sans);color:var(--slate);background:var(--ivory);overflow:hidden;height:100vh;display:flex;flex-direction:column;-webkit-font-smoothing:antialiased}
+
+  .slide-container{flex:1;display:flex;align-items:center;justify-content:center;padding:48px}
+
+  section.slide{display:none;max-width:720px;width:100%;animation:fadeIn .3s ease}
+  section.slide.active{display:block}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+  .slide h1{font:500 48px/1.1 var(--font-sans);margin-bottom:24px}
+  .slide h2{font:500 32px/1.2 var(--font-sans);margin-bottom:20px}
+  .slide p{font-size:18px;line-height:1.6;color:var(--gray-700);margin-bottom:16px}
+  .slide ul{list-style:none;padding:0}
+  .slide li{font-size:18px;line-height:1.6;margin-bottom:14px;padding-left:24px;position:relative}
+  .slide li::before{content:"";position:absolute;left:0;top:10px;width:8px;height:8px;border-radius:50%;background:var(--clay)}
+  .slide .note{font-size:14px;color:var(--gray-500);margin-top:24px;font-style:italic}
+
+  .slide pre{font-size:14px;background:var(--oat);border:1px solid var(--gray-300);border-radius:8px;padding:20px;margin-top:16px}
+  .slide code{font-family:var(--font-mono);font-size:14px;background:none;padding:0}
+
+  /* ── Footer ── */
+  .deck-footer{display:flex;align-items:center;justify-content:space-between;padding:16px 32px;border-top:1px solid var(--gray-300);background:var(--white)}
+  .deck-footer .counter{font:12px var(--font-mono);color:var(--gray-500)}
+  .deck-footer .dots{display:flex;gap:8px}
+  .deck-footer .dot{width:8px;height:8px;border-radius:50%;background:var(--gray-300);cursor:pointer;transition:background .15s}
+  .deck-footer .dot.active{background:var(--clay)}
+  .deck-footer .hint{font-size:12px;color:var(--gray-500)}
+</style>
+</head>
+<body>
+
+<div class="slide-container">
+
+  <!-- 
+  SLIDE — repeat <section class="slide"> for each slide.
+  First slide gets class="active". 
+  -->
+
+  <section class="slide active">
+    <h1><!-- Presentation Title --></h1>
+    <p><!-- Subtitle or date --></p>
+    <p class="note">← → arrow keys to navigate</p>
+  </section>
+
+  <section class="slide">
+    <h2><!-- Slide heading --></h2>
+    <ul>
+      <li><!-- Point 1 --></li>
+      <li><!-- Point 2 --></li>
+      <li><!-- Point 3 --></li>
+    </ul>
+  </section>
+
+  <section class="slide">
+    <h2><!-- Slide heading --></h2>
+    <p><!-- Body text with inline <code>code</code> --></p>
+    <pre><!-- Code block --></pre>
+  </section>
+
+</div>
+
+<div class="deck-footer">
+  <div class="hint">← → to navigate</div>
+  <div class="dots" id="dots">
+    <!-- 
+    DOT — repeat for each slide:
+    <span class="dot" onclick="goTo(N)"></span>
+    -->
+  </div>
+  <div class="counter" id="counter">1 / N</div>
+</div>
+
+<script>
+  const slides = document.querySelectorAll('section.slide');
+  let current = 0;
+  const total = slides.length;
+  const counter = document.getElementById('counter');
+  const dotsContainer = document.getElementById('dots');
+
+  // Create dots
+  for (let i = 0; i < total; i++) {
+    const dot = document.createElement('span');
+    dot.className = 'dot' + (i === 0 ? ' active' : '');
+    dot.onclick = () => goTo(i);
+    dotsContainer.appendChild(dot);
+  }
+
+  function goTo(index) {
+    if (index < 0 || index >= total) return;
+    slides[current].classList.remove('active');
+    dotsContainer.children[current].classList.remove('active');
+    current = index;
+    slides[current].classList.add('active');
+    dotsContainer.children[current].classList.add('active');
+    counter.textContent = (current + 1) + ' / ' + total;
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+      e.preventDefault();
+      if (current < total - 1) goTo(current + 1);
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (current > 0) goTo(current - 1);
+    }
+  });
+</script>
+
+</body>
+</html>

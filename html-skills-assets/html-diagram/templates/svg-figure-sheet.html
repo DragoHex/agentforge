@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SVG Figure Sheet</title>
+<style>
+  :root {
+    --ivory: #FAF9F5; --slate: #141413; --clay: #D97757; --olive: #788C5D;
+    --oat: #E3DACC; --gray-150: #F0EEE6; --gray-300: #D1CFC5; --gray-500: #87867F;
+    --gray-700: #3D3D3A; --white: #FFFFFF;
+    --font-sans: system-ui, -apple-system, sans-serif;
+    --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font: 430 16px/1.55 var(--font-sans);
+    color: var(--slate); background: var(--ivory);
+    max-width: 960px; margin: 0 auto; padding: 32px 24px;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1 { font: 500 32px/1.2 var(--font-sans); margin-bottom: 8px; }
+  .subtitle { color: var(--gray-500); font-size: 14px; margin-bottom: 32px; }
+
+  /* ── Figure Grid ── */
+  .figure-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 24px;
+  }
+
+  .figure-card {
+    background: var(--white);
+    border: 1px solid var(--gray-300);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .figure-card .fig-preview {
+    padding: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+    border-bottom: 1px solid var(--gray-300);
+    background: var(--ivory);
+  }
+  .figure-card .fig-preview svg { max-width: 100%; height: auto; }
+
+  .figure-card .fig-info {
+    padding: 16px;
+  }
+  .figure-card .fig-info h3 {
+    font: 500 16px/1.3 var(--font-sans);
+    margin-bottom: 4px;
+  }
+  .figure-card .fig-info p {
+    font-size: 13px;
+    color: var(--gray-500);
+    margin-bottom: 12px;
+  }
+
+  .btn-copy {
+    font: 500 12px/1.4 var(--font-sans);
+    padding: 6px 14px;
+    background: var(--white);
+    border: 1px solid var(--gray-300);
+    border-radius: 6px;
+    color: var(--slate);
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .btn-copy:hover { background: var(--gray-150); }
+  .btn-copy.copied { background: var(--olive); color: var(--white); border-color: var(--olive); }
+
+  /* ── Palette Reference ── */
+  .palette-ref {
+    margin-top: 48px; padding: 20px;
+    background: var(--white);
+    border: 1px solid var(--gray-300);
+    border-radius: 12px;
+  }
+  .palette-ref h2 { font: 500 20px/1.3 var(--font-sans); margin-bottom: 16px; }
+  .swatches { display: flex; gap: 12px; flex-wrap: wrap; }
+  .swatch {
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    font: 11px var(--font-mono); color: var(--gray-500);
+  }
+  .swatch div { width: 48px; height: 48px; border-radius: 8px; border: 1px solid var(--gray-300); }
+</style>
+</head>
+<body>
+
+<h1><!-- TITLE: Figure sheet name --></h1>
+<p class="subtitle"><!-- SUBTITLE: Brief description of the figure set --></p>
+
+<div class="figure-grid">
+  <!-- 
+  FIGURE CARD pattern — repeat for each figure:
+  
+  <div class="figure-card">
+    <div class="fig-preview">
+      <svg viewBox="0 0 400 180" xmlns="http://www.w3.org/2000/svg">
+        <style>
+          text { font-family: system-ui, sans-serif; }
+          .label-mono { font-family: ui-monospace, monospace; font-size: 11px; }
+          .annotate { font-size: 12px; fill: #87867F; }
+        </style>
+        FIGURE MARKUP HERE
+      </svg>
+    </div>
+    <div class="fig-info">
+      <h3>Figure Title</h3>
+      <p>Where this figure is used — e.g., "For the intro page header."</p>
+      <button class="btn-copy" onclick="copyFigure(this)" data-fig="fig-1">Download SVG</button>
+    </div>
+  </div>
+  -->
+
+  <!-- FIGURE: Queue -->
+  <div class="figure-card">
+    <div class="fig-preview">
+      <svg id="fig-queue" viewBox="0 0 400 180" xmlns="http://www.w3.org/2000/svg">
+        <style>
+          text { font-family: system-ui, sans-serif; }
+          .label-mono { font-family: ui-monospace, monospace; font-size: 11px; }
+          .annotate { font-size: 12px; fill: #87867F; }
+        </style>
+        <!-- Queue of jobs -->
+        <rect x="30" y="50" width="56" height="36" rx="10" fill="#FAF9F5" stroke="#D1CFC5" stroke-width="1.5"/>
+        <text x="58" y="73" text-anchor="middle" class="label-mono" fill="#141413">job 5</text>
+        <rect x="96" y="50" width="56" height="36" rx="10" fill="#FAF9F5" stroke="#D1CFC5" stroke-width="1.5"/>
+        <text x="124" y="73" text-anchor="middle" class="label-mono" fill="#141413">job 4</text>
+        <rect x="162" y="50" width="56" height="36" rx="10" fill="#FAF9F5" stroke="#D1CFC5" stroke-width="1.5"/>
+        <text x="190" y="73" text-anchor="middle" class="label-mono" fill="#141413">job 3</text>
+        <rect x="228" y="50" width="56" height="36" rx="10" fill="#FAF9F5" stroke="#D1CFC5" stroke-width="1.5"/>
+        <text x="256" y="73" text-anchor="middle" class="label-mono" fill="#141413">job 2</text>
+        <rect x="294" y="50" width="56" height="36" rx="10" fill="#D97757" stroke="#D97757" stroke-width="2"/>
+        <text x="322" y="73" text-anchor="middle" class="label-mono" fill="#FFFFFF">job 1</text>
+        <!-- Arrow to worker -->
+        <line x1="350" y1="68" x2="380" y2="68" stroke="#87867F" stroke-width="1.5" marker-end="url(#arrow-q)"/>
+        <defs><marker id="arrow-q" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#87867F"/></marker></defs>
+        <!-- Worker pool -->
+        <rect x="385" y="42" width="60" height="52" rx="10" fill="#F0EEE6" stroke="#D1CFC5" stroke-width="1.5"/>
+        <text x="415" y="63" text-anchor="middle" class="label-mono" fill="#141413">worker</text>
+        <text x="415" y="80" text-anchor="middle" class="label-mono" fill="#87867F">pool=4</text>
+        <!-- Labels -->
+        <text x="190" y="36" text-anchor="middle" class="annotate">queue</text>
+        <text x="190" y="110" text-anchor="middle" class="annotate">Jobs are pulled FIFO; the worker leases one at a time.</text>
+      </svg>
+    </div>
+    <div class="fig-info">
+      <h3>Queue</h3>
+      <p>For "How jobs are picked up" — intro page header.</p>
+      <button class="btn-copy" onclick="copyFigure(this, 'fig-queue')">Download SVG</button>
+    </div>
+  </div>
+
+  <!-- FIGURE: Retry with Backoff -->
+  <div class="figure-card">
+    <div class="fig-preview">
+      <svg id="fig-retry" viewBox="0 0 400 180" xmlns="http://www.w3.org/2000/svg">
+        <style>
+          text { font-family: system-ui, sans-serif; }
+          .label-mono { font-family: ui-monospace, monospace; font-size: 11px; }
+          .annotate { font-size: 12px; fill: #87867F; }
+        </style>
+        <line x1="30" y1="80" x2="370" y2="80" stroke="#D1CFC5" stroke-width="1"/>
+        <text x="380" y="84" class="annotate">time →</text>
+        <text x="28" y="68" text-anchor="middle" class="annotate">t=0</text>
+        <!-- Attempts -->
+        <rect x="40" y="90" width="20" height="18" rx="4" fill="#D97757" stroke="#D97757" stroke-width="1.5"/>
+        <text x="50" y="103" text-anchor="middle" font-size="9" fill="#FFF" font-family="monospace">1</text>
+        <text x="50" y="124" text-anchor="middle" class="annotate">try 1</text>
+        <rect x="120" y="90" width="20" height="18" rx="4" fill="#D97757" stroke="#D97757" stroke-width="1.5"/>
+        <text x="130" y="103" text-anchor="middle" font-size="9" fill="#FFF" font-family="monospace">2</text>
+        <text x="130" y="124" text-anchor="middle" class="annotate">try 2</text>
+        <text x="90" y="80" text-anchor="middle" class="annotate">+1s</text>
+        <rect x="220" y="90" width="20" height="18" rx="4" fill="#D97757" stroke="#D97757" stroke-width="1.5"/>
+        <text x="230" y="103" text-anchor="middle" font-size="9" fill="#FFF" font-family="monospace">3</text>
+        <text x="230" y="124" text-anchor="middle" class="annotate">try 3</text>
+        <text x="175" y="80" text-anchor="middle" class="annotate">+2s</text>
+        <rect x="340" y="90" width="20" height="18" rx="4" fill="#D1CFC5" stroke="#D1CFC5" stroke-width="1.5"/>
+        <text x="350" y="103" text-anchor="middle" font-size="9" fill="#87867F" font-family="monospace">4</text>
+        <text x="350" y="124" text-anchor="middle" class="annotate">try 4</text>
+        <text x="285" y="80" text-anchor="middle" class="annotate">+4s</text>
+        <!-- Annotation -->
+        <text x="200" y="155" text-anchor="middle" class="annotate">Each failure waits twice as long before re-queuing; jitter not pictured.</text>
+      </svg>
+    </div>
+    <div class="fig-info">
+      <h3>Retry with backoff</h3>
+      <p>For "Handling failures" — retry policy header.</p>
+      <button class="btn-copy" onclick="copyFigure(this, 'fig-retry')">Download SVG</button>
+    </div>
+  </div>
+
+  <!-- FIGURE: Fan-out / Fan-in -->
+  <div class="figure-card">
+    <div class="fig-preview">
+      <svg id="fig-fanout" viewBox="0 0 400 180" xmlns="http://www.w3.org/2000/svg">
+        <style>
+          text { font-family: system-ui, sans-serif; }
+          .label-mono { font-family: ui-monospace, monospace; font-size: 11px; }
+          .annotate { font-size: 12px; fill: #87867F; }
+        </style>
+        <!-- Parent -->
+        <rect x="20" y="58" width="64" height="36" rx="10" fill="#D97757" stroke="#D97757" stroke-width="2"/>
+        <text x="52" y="81" text-anchor="middle" class="label-mono" fill="#FFFFFF">batch()</text>
+        <text x="52" y="46" text-anchor="middle" class="annotate">enqueue</text>
+        <!-- Arrows fan-out -->
+        <line x1="84" y1="68" x2="130" y2="48" stroke="#87867F" stroke-width="1.5" marker-end="url(#arrow-f)"/>
+        <line x1="84" y1="76" x2="130" y2="76" stroke="#87867F" stroke-width="1.5" marker-end="url(#arrow-f)"/>
+        <line x1="84" y1="84" x2="130" y2="104" stroke="#87867F" stroke-width="1.5" marker-end="url(#arrow-f)"/>
+        <defs><marker id="arrow-f" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#87867F"/></marker></defs>
+        <!-- Children -->
+        <rect x="135" y="35" width="64" height="26" rx="10" fill="#FAF9F5" stroke="#D1CFC5" stroke-width="1.5"/>
+        <text x="167" y="52" text-anchor="middle" class="label-mono" fill="#141413">shard 0</text>
+        <rect x="135" y="63" width="64" height="26" rx="10" fill="#FAF9F5" stroke="#D1CFC5" stroke-width="1.5"/>
+        <text x="167" y="80" text-anchor="middle" class="label-mono" fill="#141413">shard 1</text>
+        <rect x="135" y="91" width="64" height="26" rx="10" fill="#FAF9F5" stroke="#D1CFC5" stroke-width="1.5"/>
+        <text x="167" y="108" text-anchor="middle" class="label-mono" fill="#141413">shard 2</text>
+        <!-- Merge arrows -->
+        <line x1="199" y1="48" x2="240" y2="68" stroke="#87867F" stroke-width="1.5"/>
+        <line x1="199" y1="76" x2="240" y2="76" stroke="#87867F" stroke-width="1.5"/>
+        <line x1="199" y1="104" x2="240" y2="84" stroke="#87867F" stroke-width="1.5"/>
+        <!-- Merge node -->
+        <rect x="245" y="58" width="64" height="36" rx="10" fill="#788C5D" stroke="#788C5D" stroke-width="2"/>
+        <text x="277" y="81" text-anchor="middle" class="label-mono" fill="#FFFFFF">await all</text>
+        <!-- Labels -->
+        <text x="52" y="132" text-anchor="middle" class="annotate">fan-out</text>
+        <text x="277" y="132" text-anchor="middle" class="annotate">fan-in</text>
+        <text x="155" y="155" text-anchor="middle" class="annotate">Parent job spawns N children, then blocks on a completion barrier.</text>
+      </svg>
+    </div>
+    <div class="fig-info">
+      <h3>Fan-out / fan-in</h3>
+      <p>For "Batch and parallel work" — fan-out pattern header.</p>
+      <button class="btn-copy" onclick="copyFigure(this, 'fig-fanout')">Download SVG</button>
+    </div>
+  </div>
+</div>
+
+<div class="palette-ref">
+  <h2>Palette &amp; rules</h2>
+  <div class="swatches">
+    <div class="swatch"><div style="background:#FAF9F5"></div>ivory</div>
+    <div class="swatch"><div style="background:#141413"></div>slate</div>
+    <div class="swatch"><div style="background:#D97757"></div>clay</div>
+    <div class="swatch"><div style="background:#788C5D"></div>olive</div>
+    <div class="swatch"><div style="background:#E3DACC"></div>oat</div>
+    <div class="swatch"><div style="background:#F0EEE6"></div>gray-150</div>
+    <div class="swatch"><div style="background:#D1CFC5"></div>gray-300</div>
+    <div class="swatch"><div style="background:#87867F"></div>gray-500</div>
+  </div>
+  <p style="margin-top: 16px; font-size: 13px; color: var(--gray-500);">
+    Strokes are 1.5px for neutral boxes, 2px for emphasised containers. All rectangles use <code>rx="10"</code>. No drop shadows or gradients. Labels inside boxes are 11px mono; annotations outside are 12px sans, gray-500. Clay marks "the thing in focus"; olive marks "success / done". Each SVG carries its own <code>&lt;style&gt;</code> block so the download stands alone.
+  </p>
+</div>
+
+<script>
+  function copyFigure(btn, svgId) {
+    const svg = document.getElementById(svgId);
+    if (!svg) return;
+    const clone = svg.cloneNode(true);
+    clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+    const markup = new XMLSerializer().serializeToString(clone);
+    navigator.clipboard.writeText(markup).then(() => {
+      btn.textContent = 'Copied!';
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.textContent = 'Download SVG';
+        btn.classList.remove('copied');
+      }, 1500);
+    }).catch(() => {
+      // Fallback: download as file
+      const blob = new Blob([markup], {type: 'image/svg+xml;charset=utf-8'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = svgId + '.svg';
+      a.click(); URL.revokeObjectURL(url);
+    });
+  }
+</script>
+
+</body>
+</html>

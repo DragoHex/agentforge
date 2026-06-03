@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Timeline</title>
+<style>
+  :root { --ivory:#FAF9F5; --slate:#141413; --clay:#D97757; --olive:#788C5D; --oat:#E3DACC; --gray-150:#F0EEE6; --gray-300:#D1CFC5; --gray-500:#87867F; --gray-700:#3D3D3A; --white:#FFF; --danger:#B04A4A; --font-sans:system-ui,-apple-system,sans-serif; --font-mono:ui-monospace,Menlo,monospace; }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{font:430 16px/1.55 var(--font-sans);color:var(--slate);background:var(--ivory);max-width:960px;margin:0 auto;padding:32px 24px;-webkit-font-smoothing:antialiased}
+  h1{font:500 32px/1.2 var(--font-sans);margin-bottom:8px}
+  h2{font:500 24px/1.3 var(--font-sans);margin:32px 0 12px}
+  .subtitle{color:var(--gray-500);font-size:14px;margin-bottom:32px}
+
+  /* ── Horizontal Milestone Track ── */
+  .milestone-track{display:flex;align-items:flex-start;justify-content:space-between;position:relative;padding:32px 0;margin-bottom:32px}
+  .milestone-track::before{content:"";position:absolute;top:47px;left:0;right:0;height:2px;background:var(--gray-300)}
+  .milestone{display:flex;flex-direction:column;align-items:center;gap:12px;flex:1;position:relative;z-index:1}
+  .milestone .dot{width:14px;height:14px;border-radius:50%;background:var(--white);border:2px solid var(--gray-300);flex-shrink:0}
+  .milestone.done .dot{background:var(--olive);border-color:var(--olive)}
+  .milestone.active .dot{background:var(--clay);border-color:var(--clay);box-shadow:0 0 0 4px rgba(217,119,87,0.2)}
+  .milestone .label{font:500 14px/1.4 var(--font-sans);color:var(--slate);text-align:center}
+  .milestone .date{font:12px/1.4 var(--font-mono);color:var(--gray-500);text-align:center}
+  .milestone .desc{font-size:13px;color:var(--gray-500);text-align:center;max-width:160px}
+
+  /* ── Vertical Incident Timeline ── */
+  .incident-timeline{position:relative;padding-left:100px;margin-bottom:32px}
+  .incident-timeline::before{content:"";position:absolute;left:85px;top:0;bottom:0;width:2px;background:var(--gray-300)}
+  .incident-row{display:flex;align-items:flex-start;margin-bottom:20px;position:relative}
+  .incident-row .time{width:75px;text-align:right;padding-right:20px;font:12px/1.4 var(--font-mono);color:var(--gray-500);flex-shrink:0}
+  .incident-row::before{content:"";position:absolute;left:80px;top:6px;width:12px;height:12px;border-radius:50%;border:2px solid var(--gray-300);background:var(--white);z-index:1}
+  .incident-row.severe::before{background:var(--danger);border-color:var(--danger)}
+  .incident-row.resolved::before{background:var(--olive);border-color:var(--olive)}
+  .incident-row .event{font-size:14px;color:var(--slate);padding-top:2px}
+  .incident-row .event .actor{color:var(--gray-500);font-size:12px}
+</style>
+</head>
+<body>
+
+<h1><!-- TITLE --></h1>
+<p class="subtitle"><!-- Context --></p>
+
+<!-- ============================================ -->
+<!-- HORIZONTAL MILESTONE TRACK                   -->
+<!-- ============================================ -->
+
+<h2><!-- e.g. "Milestones" --></h2>
+<div class="milestone-track">
+  <!-- 
+  MILESTONE — repeat for each:
+  <div class="milestone [done|active]">
+    <div class="dot"></div>
+    <div class="label">Slice name</div>
+    <div class="date">Mon–Tue</div>
+    <div class="desc">What lands in this slice.</div>
+  </div>
+  -->
+  <div class="milestone done">
+    <div class="dot"></div>
+    <div class="label">Schema & API</div>
+    <div class="date">Mon–Tue</div>
+    <div class="desc">Migrations, tRPC stubs. No UI.</div>
+  </div>
+  <div class="milestone active">
+    <div class="dot"></div>
+    <div class="label">Thread & Composer</div>
+    <div class="date">Wed–Fri</div>
+    <div class="desc">Static thread from fixtures. Optimistic insert.</div>
+  </div>
+  <div class="milestone">
+    <div class="dot"></div>
+    <div class="label">Realtime & Unread</div>
+    <div class="date">Mon–Wed</div>
+    <div class="desc">Subscribe to channel. Read cursors.</div>
+  </div>
+  <div class="milestone">
+    <div class="dot"></div>
+    <div class="label">Notifications & Ramp</div>
+    <div class="date">Thu–Fri</div>
+    <div class="desc">Mentions → notifications. Flag ramp.</div>
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- VERTICAL INCIDENT TIMELINE                   -->
+<!-- ============================================ -->
+
+<h2><!-- e.g. "Timeline" --></h2>
+<div class="incident-timeline">
+  <!-- 
+  INCIDENT ROW — repeat for each:
+  <div class="incident-row [severe|resolved]">
+    <div class="time">HH:MM</div>
+    <div class="event">Description. <span class="actor">(Name)</span></div>
+  </div>
+  -->
+  <div class="incident-row">
+    <div class="time">14:02</div>
+    <div class="event">Config change <code>cfg-9a12</code> promoted to production via standard rollout.</div>
+  </div>
+  <div class="incident-row severe">
+    <div class="time">14:06</div>
+    <div class="event">Impact starts. Sync workers queue on pool checkout; p95 latency climbs past 4s.</div>
+  </div>
+  <div class="incident-row severe">
+    <div class="time">14:07</div>
+    <div class="event">Alert fires: <code>sync_5xx_rate > 2%</code>. On-call acknowledges. <span class="actor">(Devon)</span></div>
+  </div>
+  <div class="incident-row">
+    <div class="time">14:18</div>
+    <div class="event">Initial hypothesis: bad deploy. Last two deploys rolled back — no effect.</div>
+  </div>
+  <div class="incident-row">
+    <div class="time">14:31</div>
+    <div class="event">Mira notices pool-wait saturation. Investigation pivots to infra config. <span class="actor">(Mira)</span></div>
+  </div>
+  <div class="incident-row resolved">
+    <div class="time">14:44</div>
+    <div class="event">Mitigated. Config reverted; worker fleet cycled. 5xx drops below 0.2%.</div>
+  </div>
+  <div class="incident-row resolved">
+    <div class="time">14:49</div>
+    <div class="event">Monitors green for 5 minutes. Incident resolved.</div>
+  </div>
+</div>
+
+</body>
+</html>

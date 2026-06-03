@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module Map</title>
+<style>
+  :root { --ivory:#FAF9F5; --slate:#141413; --clay:#D97757; --olive:#788C5D; --oat:#E3DACC; --gray-150:#F0EEE6; --gray-300:#D1CFC5; --gray-500:#87867F; --gray-700:#3D3D3A; --white:#FFF; --font-sans:system-ui,-apple-system,sans-serif; --font-mono:ui-monospace,Menlo,monospace; }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{font:430 16px/1.55 var(--font-sans);color:var(--slate);background:var(--ivory);max-width:960px;margin:0 auto;padding:32px 24px;-webkit-font-smoothing:antialiased}
+  h1{font:500 32px/1.2 var(--font-sans);margin-bottom:8px}
+  h2{font:500 20px/1.3 var(--font-sans);margin:32px 0 16px;padding-bottom:6px;border-bottom:1px solid var(--gray-300)}
+  .subtitle{color:var(--gray-500);font-size:14px;margin-bottom:24px}
+
+  /* ── Request Path Strip ── */
+  .path-strip{display:flex;align-items:center;gap:8px;margin-bottom:32px;padding:16px 20px;background:var(--white);border:1px solid var(--gray-300);border-radius:12px;overflow-x:auto;font-size:13px;flex-wrap:wrap}
+  .path-step{font:500 13px/1.4 var(--font-sans);padding:6px 14px;background:var(--gray-150);border-radius:8px;white-space:nowrap}
+  .path-step.hot{background:var(--clay);color:var(--white)}
+  .path-arrow{color:var(--gray-500);font-size:18px;flex-shrink:0}
+
+  /* ── Diagram ── */
+  .diagram-wrap{background:var(--white);border:1px solid var(--gray-300);border-radius:12px;padding:24px;margin-bottom:32px;overflow-x:auto}
+  .diagram-wrap svg{display:block;margin:0 auto}
+
+  /* ── Callstack Walkthrough ── */
+  .callstep{border:1px solid var(--gray-300);border-radius:12px;margin-bottom:12px;overflow:hidden}
+  .callstep summary{font:500 15px/1.4 var(--font-sans);padding:14px 18px;cursor:pointer;list-style:none;display:flex;align-items:center;gap:12px}
+  .callstep summary::-webkit-details-marker{display:none}
+  .callstep .num{width:22px;height:22px;border-radius:50%;background:var(--clay);color:var(--white);font:500 12px/22px var(--font-sans);text-align:center;flex-shrink:0}
+  .callstep .loc{font:12px var(--font-mono);color:var(--gray-500);margin-left:auto}
+  .callstep .body{padding:0 18px 18px 52px}
+  .callstep .body p{font-size:14px;color:var(--gray-700);margin-bottom:12px}
+  .callstep .body pre{background:var(--ivory);margin:0}
+
+  .entry-badge{display:inline-block;font:10px var(--font-mono);padding:2px 8px;border-radius:4px;background:var(--info);color:var(--white);text-transform:uppercase;letter-spacing:.03em;margin-left:6px}
+</style>
+</head>
+<body>
+
+<h1><!-- TITLE e.g. "How authentication flows through the codebase" --></h1>
+<p class="subtitle"><!-- Project/context --></p>
+
+<!-- Request Path -->
+<h2>Request path</h2>
+<div class="path-strip">
+  <span class="path-step hot">Browser</span>
+  <span class="path-arrow">→</span>
+  <span class="path-step"><!-- app --> <span class="entry-badge">entry</span></span>
+  <span class="path-arrow">→</span>
+  <span class="path-step"><!-- route handler --></span>
+  <span class="path-arrow">→</span>
+  <span class="path-step"><!-- middleware --></span>
+  <span class="path-arrow">→</span>
+  <span class="path-step"><!-- store --></span>
+  <span class="path-arrow">→</span>
+  <span class="path-step"><!-- database --></span>
+</div>
+
+<!-- Box-and-Arrow Diagram -->
+<h2>Module map</h2>
+<div class="diagram-wrap">
+  <svg viewBox="0 0 800 220" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <marker id="arrow-mm" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+        <path d="M 0 0 L 10 5 L 0 10 z" fill="#87867F"/>
+      </marker>
+      <marker id="arrow-hot" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+        <path d="M 0 0 L 10 5 L 0 10 z" fill="#D97757"/>
+      </marker>
+    </defs>
+    <!-- Replace with actual box-and-arrow diagram -->
+    <rect x="20" y="70" width="160" height="48" rx="10" fill="#FFF" stroke="#D97757" stroke-width="2"/>
+    <text x="100" y="98" text-anchor="middle" font-family="monospace" font-size="11" fill="#141413">auth.ts</text>
+    <text x="100" y="112" text-anchor="middle" font-family="sans-serif" font-size="10" fill="#D97757">hot path</text>
+    <line x1="180" y1="94" x2="250" y2="94" stroke="#D97757" stroke-width="2" marker-end="url(#arrow-hot)"/>
+    <rect x="260" y="70" width="160" height="48" rx="10" fill="#FFF" stroke="#D1CFC5" stroke-width="1.5"/>
+    <text x="340" y="98" text-anchor="middle" font-family="monospace" font-size="11" fill="#141413">sessionStore.ts</text>
+    <line x1="420" y1="94" x2="490" y2="94" stroke="#87867F" stroke-width="1.5" marker-end="url(#arrow-mm)"/>
+    <rect x="500" y="70" width="160" height="48" rx="10" fill="#FFF" stroke="#D1CFC5" stroke-width="1.5"/>
+    <text x="580" y="98" text-anchor="middle" font-family="monospace" font-size="11" fill="#141413">Postgres</text>
+    <text x="340" y="145" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#87867F">LRU cache → DB fallback</text>
+  </svg>
+</div>
+
+<!-- Callstack Walkthrough -->
+<h2>Callstack walkthrough</h2>
+
+<details class="callstep" open>
+  <summary><span class="num">1</span> <!-- Step title --> <span class="loc"><!-- file:LN-LN --></span></summary>
+  <div class="body">
+    <p><!-- Description of what happens at this step. --></p>
+    <pre><!-- Code snippet --></pre>
+  </div>
+</details>
+
+<details class="callstep">
+  <summary><span class="num">2</span> <!-- Step title --> <span class="loc"><!-- file:LN-LN --></span></summary>
+  <div class="body">
+    <p><!-- Description --></p>
+    <pre><!-- Code snippet --></pre>
+  </div>
+</details>
+
+<details class="callstep">
+  <summary><span class="num">3</span> <!-- Step title --> <span class="loc"><!-- file:LN-LN --></span></summary>
+  <div class="body">
+    <p><!-- Description --></p>
+    <pre><!-- Code snippet --></pre>
+  </div>
+</details>
+
+</body>
+</html>
