@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Comparison — Approaches</title>
+<style>
+  :root { --ivory:#FAF9F5; --slate:#141413; --clay:#D97757; --olive:#788C5D; --oat:#E3DACC; --gray-150:#F0EEE6; --gray-300:#D1CFC5; --gray-500:#87867F; --gray-700:#3D3D3A; --white:#FFF; --danger:#B04A4A; --info:#5C7CA3; --font-sans:system-ui,-apple-system,sans-serif; --font-mono:ui-monospace,Menlo,monospace; }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{font:430 16px/1.55 var(--font-sans);color:var(--slate);background:var(--ivory);max-width:1200px;margin:0 auto;padding:32px 24px;-webkit-font-smoothing:antialiased}
+  h1{font:500 32px/1.2 var(--font-sans);margin-bottom:8px}
+  .subtitle{color:var(--gray-500);font-size:14px;margin-bottom:32px}
+
+  .comparison-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;margin-bottom:32px}
+  .option{background:var(--white);border:1px solid var(--gray-300);border-radius:12px;overflow:hidden;display:flex;flex-direction:column}
+  .option.recommended{border-left:3px solid var(--clay)}
+  .option-header{background:var(--gray-150);padding:12px 20px;border-bottom:1px solid var(--gray-300)}
+  .option-header h3{font:500 18px/1.3 var(--font-sans);color:var(--slate)}
+  .option-header .label{font-size:12px;color:var(--gray-500);text-transform:uppercase;letter-spacing:.03em}
+  .option-body{padding:20px;flex:1}
+  .option-body pre{font:13px/1.5 var(--font-mono);background:var(--ivory);border:1px solid var(--gray-300);border-radius:8px;padding:16px;overflow-x:auto;margin-bottom:16px;color:var(--slate)}
+  .pros-cons{margin-bottom:16px}
+  .pros-cons .pro,.pros-cons .con{margin-bottom:6px;font-size:14px;padding-left:18px;position:relative}
+  .pros-cons .pro::before{content:"✓";position:absolute;left:0;color:var(--olive);font-weight:700}
+  .pros-cons .con::before{content:"✗";position:absolute;left:0;color:var(--danger);font-weight:700}
+  .pros-cons h4{font:500 12px/1.4 var(--font-sans);text-transform:uppercase;letter-spacing:.03em;color:var(--gray-500);margin:12px 0 6px}
+
+  .verdict{border-top:1px solid var(--gray-300);padding:12px 20px;font-size:12px;color:var(--gray-500);display:flex;flex-wrap:wrap;gap:8px}
+  .verdict span{background:var(--gray-150);padding:3px 10px;border-radius:4px;font-family:var(--font-mono);font-size:11px}
+
+  .recommend-badge{display:inline-block;background:var(--clay);color:var(--white);font:500 11px/1.4 var(--font-sans);padding:2px 8px;border-radius:4px;text-transform:uppercase;letter-spacing:.03em;margin-left:8px}
+</style>
+</head>
+<body>
+
+<h1><!-- TITLE e.g. "Debounced search — three approaches" --></h1>
+<p class="subtitle"><!-- Brief context --></p>
+
+<div class="comparison-grid">
+
+  <!-- OPTION 1 -->
+  <div class="option">
+    <div class="option-header">
+      <div class="label"><!-- Label e.g. "Approach A" --></div>
+      <h3><!-- Option name e.g. "useEffect raw" --></h3>
+    </div>
+    <div class="option-body">
+      <pre><!-- Code snippet --></pre>
+      <div class="pros-cons">
+        <h4>Pro</h4>
+        <div class="pro"><!-- Pro 1 --></div>
+        <div class="pro"><!-- Pro 2 --></div>
+        <h4>Con</h4>
+        <div class="con"><!-- Con 1 --></div>
+        <div class="con"><!-- Con 2 --></div>
+      </div>
+    </div>
+    <div class="verdict">
+      <span>Bundle: 0 kb</span><span>Testability: medium</span><span>Reuse: low</span>
+    </div>
+  </div>
+
+  <!-- OPTION 2 (recommended) -->
+  <div class="option recommended">
+    <div class="option-header">
+      <div class="label">Approach B <span class="recommend-badge">Recommended</span></div>
+      <h3><!-- Option name --></h3>
+    </div>
+    <div class="option-body">
+      <pre><!-- Code --></pre>
+      <div class="pros-cons">
+        <h4>Pro</h4>
+        <div class="pro"><!-- --></div>
+        <h4>Con</h4>
+        <div class="con"><!-- --></div>
+      </div>
+    </div>
+    <div class="verdict">
+      <span>Bundle: +0.2 kb</span><span>Testability: high</span><span>Reuse: high</span>
+    </div>
+  </div>
+
+  <!-- OPTION 3 -->
+  <div class="option">
+    <div class="option-header">
+      <div class="label">Approach C</div>
+      <h3><!-- Option name --></h3>
+    </div>
+    <div class="option-body">
+      <pre><!-- Code --></pre>
+      <div class="pros-cons">
+        <h4>Pro</h4>
+        <div class="pro"><!-- --></div>
+        <h4>Con</h4>
+        <div class="con"><!-- --></div>
+      </div>
+    </div>
+    <div class="verdict">
+      <span>Bundle: +1.4 kb</span><span>Testability: high</span><span>Reuse: high</span>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PR Review — Annotated</title>
+<style>
+  :root { --ivory:#FAF9F5; --slate:#141413; --clay:#D97757; --olive:#788C5D; --oat:#E3DACC; --gray-150:#F0EEE6; --gray-300:#D1CFC5; --gray-500:#87867F; --gray-700:#3D3D3A; --white:#FFF; --danger:#B04A4A; --warning:#C78E3F; --info:#5C7CA3; --font-sans:system-ui,-apple-system,sans-serif; --font-mono:ui-monospace,Menlo,monospace; --add-bg:rgba(120,140,93,0.08); --del-bg:rgba(176,74,74,0.08); }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{font:430 16px/1.55 var(--font-sans);color:var(--slate);background:var(--ivory);max-width:1100px;margin:0 auto;padding:32px 24px;-webkit-font-smoothing:antialiased}
+  h1{font:500 32px/1.2 var(--font-sans);margin-bottom:4px}
+  .subtitle{color:var(--gray-500);font-size:14px;margin-bottom:24px}
+  h2{font:500 20px/1.3 var(--font-sans);margin:32px 0 12px}
+
+  /* ── Severity Badges ── */
+  .badge{display:inline-block;font:500 11px/1.4 var(--font-sans);padding:2px 8px;border-radius:4px;text-transform:uppercase;letter-spacing:.03em}
+  .badge-attention{background:var(--clay);color:var(--white)}
+  .badge-look{background:var(--warning);color:var(--white)}
+  .badge-safe{background:var(--olive);color:var(--white)}
+
+  /* ── PR Summary ── */
+  .pr-summary{background:var(--white);border:1px solid var(--gray-300);border-radius:12px;padding:24px;margin-bottom:32px}
+  .pr-summary p{font-size:15px;color:var(--gray-700);margin-bottom:8px}
+
+  /* ── Risk Map ── */
+  .risk-map{display:flex;gap:4px;margin-bottom:32px;align-items:center}
+  .risk-bar{height:8px;border-radius:4px}
+  .risk-bar.attention{background:var(--clay);flex:2}
+  .risk-bar.look{background:var(--warning);flex:3}
+  .risk-bar.safe{background:var(--olive);flex:4}
+  .risk-label{font:11px var(--font-mono);color:var(--gray-500);margin:0 6px}
+
+  /* ── File Section ── */
+  .file-section{margin-bottom:28px;border:1px solid var(--gray-300);border-radius:12px;overflow:hidden}
+  .file-header{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;background:var(--gray-150);border-bottom:1px solid var(--gray-300)}
+  .file-path{font:13px var(--font-mono);color:var(--slate)}
+  .file-meta{display:flex;align-items:center;gap:12px}
+  .file-changes{font:11px var(--font-mono);color:var(--gray-500)}
+
+  /* ── Diff Layout ── */
+  .diff-body{display:flex;min-height:0}
+  .diff-gutter{width:280px;flex-shrink:0;padding:12px;border-right:1px solid var(--gray-150);background:var(--ivory)}
+  .diff-content{flex:1;overflow-x:auto;min-width:0}
+  .diff-content pre{font:13px/1.6 var(--font-mono);padding:12px 20px;margin:0;background:var(--white);border:none;border-radius:0;color:var(--slate)}
+  .diff-content .ln{display:inline-block;width:40px;text-align:right;color:var(--gray-500);user-select:none;margin-right:12px;font-size:11px}
+  .diff-content .line{display:block;padding:0 4px}
+  .diff-content .line.add{background:var(--add-bg);border-left:3px solid var(--olive)}
+  .diff-content .line.del{background:var(--del-bg);border-left:3px solid var(--danger)}
+  .diff-content .line.add .ln{color:var(--olive)}
+  .diff-content .line.del .ln{color:var(--danger)}
+
+  /* ── Margin Annotations ── */
+  .annotation{padding:8px 0;border-bottom:1px solid var(--gray-150);font-size:13px}
+  .annotation:last-child{border-bottom:none}
+  .annotation .sev{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:6px;vertical-align:middle}
+  .annotation .sev.critical{background:var(--clay)}
+  .annotation .sev.suggestion{background:var(--olive)}
+  .annotation .sev.note{background:var(--gray-500)}
+  .annotation .text{color:var(--gray-700)}
+  .annotation .line-ref{font:10px var(--font-mono);color:var(--gray-500);display:block;margin-top:2px}
+</style>
+</head>
+<body>
+
+<h1><!-- PR #NNN — Title --></h1>
+<p class="subtitle"><!-- Author · branch → target --></p>
+
+<div class="pr-summary">
+  <h2 style="margin:0 0 8px;font-size:16px">What this PR does</h2>
+  <p><!-- 3-4 sentence summary of what changed, why, and what to look for --></p>
+</div>
+
+<h2>Risk map</h2>
+<div class="risk-map">
+  <!-- FILES as risk bars -->
+  <div class="risk-bar attention" title="file.ts — needs attention"></div>
+  <span class="risk-label">file.ts</span>
+  <div class="risk-bar look" title="other.ts — worth a look"></div>
+  <span class="risk-label">other.ts</span>
+  <div class="risk-bar safe" title="tests.ts — safe"></div>
+  <span class="risk-label">tests.ts</span>
+</div>
+<div style="display:flex;gap:16px;font-size:12px;margin-bottom:32px">
+  <span><span class="badge badge-attention" style="font-size:10px">needs attention</span></span>
+  <span><span class="badge badge-look" style="font-size:10px">worth a look</span></span>
+  <span><span class="badge badge-safe" style="font-size:10px">safe</span></span>
+</div>
+
+<h2>Files</h2>
+
+<!-- FILE SECTION — repeat for each changed file -->
+<div class="file-section">
+  <div class="file-header">
+    <span class="file-path"><!-- src/hooks/useSomething.ts --></span>
+    <div class="file-meta">
+      <span class="badge badge-attention">needs attention</span>
+      <span class="file-changes">+58 −0</span>
+    </div>
+  </div>
+  <div class="diff-body">
+    <div class="diff-gutter">
+      <!-- ANNOTATIONS for specific lines -->
+      <div class="annotation">
+        <span class="sev critical"></span>
+        <span class="text"><!-- Annotation describing what to notice about this section --></span>
+        <span class="line-ref">L12–16</span>
+      </div>
+      <div class="annotation">
+        <span class="sev suggestion"></span>
+        <span class="text"><!-- Suggestion for improvement --></span>
+        <span class="line-ref">L24</span>
+      </div>
+      <div class="annotation">
+        <span class="sev note"></span>
+        <span class="text"><!-- Contextual note --></span>
+        <span class="line-ref">L31–38</span>
+      </div>
+    </div>
+    <div class="diff-content">
+<pre><!--
+LINE FORMAT:
+<span class="line add"><span class="ln">12</span>+ new line of code</span>
+<span class="line del"><span class="ln">12</span>- removed line of code</span>
+<span class="line"><span class="ln">13</span>  unchanged context line</span>
+--></pre>
+    </div>
+  </div>
+</div>
+
+<!-- FILE SECTION — safe file (collapsed annotations) -->
+<div class="file-section">
+  <div class="file-header">
+    <span class="file-path"><!-- src/types/something.ts --></span>
+    <div class="file-meta">
+      <span class="badge badge-safe">safe</span>
+      <span class="file-changes">+6 −2</span>
+    </div>
+  </div>
+  <div class="diff-body">
+    <div class="diff-gutter">
+      <div class="annotation">
+        <span class="sev note"></span>
+        <span class="text">Type-only change — widens union and adds optional timestamp.</span>
+        <span class="line-ref">L3–8</span>
+      </div>
+    </div>
+    <div class="diff-content">
+<pre><!-- Type-only diff --></pre>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

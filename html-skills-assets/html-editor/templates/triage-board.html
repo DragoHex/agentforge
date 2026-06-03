@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ticket Triage Board</title>
+<style>
+  :root { --ivory:#FAF9F5; --slate:#141413; --clay:#D97757; --olive:#788C5D; --oat:#E3DACC; --gray-150:#F0EEE6; --gray-300:#D1CFC5; --gray-500:#87867F; --gray-700:#3D3D3A; --white:#FFF; --font-sans:system-ui,-apple-system,sans-serif; --font-mono:ui-monospace,Menlo,monospace; }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{font:430 16px/1.55 var(--font-sans);color:var(--slate);background:var(--ivory);padding:24px;-webkit-font-smoothing:antialiased}
+  h1{font:500 24px/1.2 var(--font-sans);margin-bottom:4px}
+  .subtitle{color:var(--gray-500);font-size:13px;margin-bottom:20px}
+
+  /* Toolbar */
+  .toolbar{display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap}
+  .btn{font:500 13px/1.4 var(--font-sans);padding:7px 16px;border-radius:7px;border:1px solid var(--gray-300);background:var(--white);cursor:pointer}
+  .btn:hover{background:var(--gray-150)}
+  .btn.primary{background:var(--clay);color:var(--white);border-color:var(--clay)}
+  .btn.primary:hover{background:#C06848}
+  .btn:active{transform:scale(.97)}
+  .tag-filter{font:11px var(--font-mono);padding:4px 10px;border-radius:4px;border:1px solid var(--gray-300);background:var(--white);cursor:pointer;color:var(--gray-500)}
+  .tag-filter.active{background:var(--clay);color:var(--white);border-color:var(--clay)}
+  .copied-toast{font:13px var(--font-sans);color:var(--olive);display:none}
+  .copied-toast.show{display:inline}
+
+  /* Board */
+  .board{display:flex;gap:16px;min-height:400px;overflow-x:auto;padding-bottom:16px}
+  .column{flex:1;min-width:220px;max-width:320px;background:var(--white);border:1px solid var(--gray-300);border-radius:12px;display:flex;flex-direction:column}
+  .column-header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--gray-150)}
+  .column-header h3{font:500 15px/1.3 var(--font-sans)}
+  .column-count{font:12px var(--font-mono);color:var(--gray-500);background:var(--gray-150);padding:2px 8px;border-radius:10px}
+  .column-body{flex:1;padding:8px;overflow-y:auto;min-height:100px}
+
+  /* Cards */
+  .card{background:var(--white);border:1px solid var(--gray-300);border-radius:8px;padding:10px 12px;margin-bottom:6px;cursor:grab;transition:box-shadow .12s,opacity .12s}
+  .card:hover{box-shadow:var(--shadow-sm)}
+  .card.dragging{opacity:.35;box-shadow:var(--shadow-md)}
+  .card .card-title{font:500 14px/1.3 var(--font-sans);margin-bottom:4px}
+  .card .card-id{font:11px var(--font-mono);color:var(--gray-500)}
+  .card .card-tags{display:flex;gap:4px;margin-top:6px;flex-wrap:wrap}
+  .card .tag{font:10px var(--font-mono);padding:1px 6px;border-radius:3px;background:var(--gray-150);color:var(--gray-500)}
+  .card.dimmed{opacity:.25}
+
+  /* Drop indicator */
+  .drop-indicator{height:3px;background:var(--clay);border-radius:2px;margin:2px 0;display:none}
+</style>
+</head>
+<body>
+
+<h1><!-- TITLE e.g. "Cycle 14 triage" --></h1>
+<p class="subtitle"><!-- e.g. "Drag tickets across columns, then copy the result as markdown." --></p>
+
+<div class="toolbar">
+  <span style="font-size:12px;color:var(--gray-500);margin-right:8px">Filter:</span>
+  <button class="tag-filter active" onclick="filterTag('all',this)">All</button>
+  <!-- TAG FILTERS — add dynamically -->
+  <span style="flex:1"></span>
+  <button class="btn primary" onclick="copyMarkdown()">Copy as markdown</button>
+  <button class="btn" onclick="resetBoard()">Reset</button>
+  <span class="copied-toast" id="toast">Copied!</span>
+</div>
+
+<div class="board" id="board">
+  <!-- 
+  COLUMN — repeat for each:
+  <div class="column" data-col="now">
+    <div class="column-header">
+      <h3>Now</h3><span class="column-count">N</span>
+    </div>
+    <div class="column-body" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event,'now')">
+      CARDS HERE
+    </div>
+  </div>
+  -->
+  <div class="column" data-col="now">
+    <div class="column-header"><h3>Now</h3><span class="column-count" id="count-now">0</span></div>
+    <div class="column-body" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event,'now')"></div>
+  </div>
+  <div class="column" data-col="next">
+    <div class="column-header"><h3>Next</h3><span class="column-count" id="count-next">0</span></div>
+    <div class="column-body" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event,'next')"></div>
+  </div>
+  <div class="column" data-col="later">
+    <div class="column-header"><h3>Later</h3><span class="column-count" id="count-later">0</span></div>
+    <div class="column-body" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event,'later')"></div>
+  </div>
+  <div class="column" data-col="cut">
+    <div class="column-header"><h3>Cut</h3><span class="column-count" id="count-cut">0</span></div>
+    <div class="column-body" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event,'cut')"></div>
+  </div>
+</div>
+
+<script>
+  // --- Card Creation ---
+  function createCard(id, title, tags) {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.draggable = true;
+    card.dataset.id = id;
+    card.dataset.tags = tags.join(',');
+    card.innerHTML = `<div class="card-title">${title}</div><div class="card-id">${id}</div><div class="card-tags">${tags.map(t => `<span class="tag">${t}</span>`).join('')}</div>`;
+    card.addEventListener('dragstart', e => {
+      e.dataTransfer.setData('text/plain', card.dataset.id);
+      e.dataTransfer.effectAllowed = 'move';
+      card.classList.add('dragging');
+    });
+    card.addEventListener('dragend', () => card.classList.remove('dragging'));
+    return card;
+  }
+
+  // --- Drag & Drop ---
+  let currentDragOver = null;
+  let indicator = null;
+
+  function handleDragOver(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    const body = e.currentTarget;
+    if (currentDragOver !== body) {
+      if (indicator) indicator.remove();
+      currentDragOver = body;
+      indicator = document.createElement('div');
+      indicator.className = 'drop-indicator';
+      indicator.style.display = 'block';
+      body.appendChild(indicator);
+    }
+  }
+
+  function handleDragLeave(e) {
+    if (e.currentTarget === currentDragOver && !e.currentTarget.contains(e.relatedTarget)) {
+      if (indicator) { indicator.remove(); indicator = null; }
+      currentDragOver = null;
+    }
+  }
+
+  function handleDrop(e, colName) {
+    e.preventDefault();
+    if (indicator) { indicator.remove(); indicator = null; }
+    currentDragOver = null;
+    const cardId = e.dataTransfer.getData('text/plain');
+    const card = document.querySelector(`.card[data-id="${cardId}"]`);
+    if (!card) return;
+    const body = e.currentTarget;
+    if (indicator && indicator.parentElement === body) {
+      body.insertBefore(card, indicator);
+    } else {
+      body.appendChild(card);
+    }
+    updateCounts();
+  }
+
+  // --- Filtering ---
+  function filterTag(tag, btn) {
+    document.querySelectorAll('.tag-filter').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.card').forEach(card => {
+      if (tag === 'all' || card.dataset.tags.split(',').includes(tag)) {
+        card.classList.remove('dimmed');
+      } else {
+        card.classList.add('dimmed');
+      }
+    });
+  }
+
+  // --- Counts ---
+  function updateCounts() {
+    ['now','next','later','cut'].forEach(col => {
+      const count = document.querySelector(`.column[data-col="${col}"] .column-body`).children.length;
+      const el = document.getElementById('count-' + col);
+      if (el) el.textContent = count;
+    });
+  }
+
+  // --- Copy as Markdown ---
+  function copyMarkdown() {
+    let md = '';
+    ['now','next','later','cut'].forEach(col => {
+      const header = document.querySelector(`.column[data-col="${col}"] .column-header h3`).textContent;
+      md += `## ${header}\n`;
+      const cards = document.querySelectorAll(`.column[data-col="${col}"] .card`);
+      cards.forEach(c => {
+        md += `- ${c.querySelector('.card-title').textContent} \`${c.dataset.id}\`\n`;
+      });
+      md += '\n';
+    });
+    navigator.clipboard.writeText(md.trim()).then(() => {
+      const toast = document.getElementById('toast');
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 1500);
+    });
+  }
+
+  // --- Reset ---
+  function resetBoard() {
+    // Store initial state would be captured at setup time
+    location.reload();
+  }
+
+  // --- Initialize with sample tickets ---
+  const tickets = [
+    ['BIR-1142','Ship onboarding empty-state rewrite',['ux','frontend']],
+    ['BIR-1098','Mention detection in comments',['backend','notifications']],
+    ['BIR-0971','Bulk task import CSV/JSON',['import','frontend']],
+    ['BIR-1203','Recurring tasks engine',['backend','scheduler']],
+    ['BIR-1188','Audit log export to S3',['backend','compliance']],
+  ];
+
+  const nowCol = document.querySelector('.column[data-col="now"] .column-body');
+  tickets.forEach(([id, title, tags]) => {
+    nowCol.appendChild(createCard(id, title, tags));
+  });
+  updateCounts();
+
+  // Collect unique tags for filter bar
+  const allTags = new Set(tickets.flatMap(t => t[2]));
+  const toolbar = document.querySelector('.toolbar');
+  allTags.forEach(tag => {
+    const btn = document.createElement('button');
+    btn.className = 'tag-filter';
+    btn.textContent = tag;
+    btn.onclick = function() { filterTag(tag, this); };
+    toolbar.insertBefore(btn, toolbar.querySelector('span[style]'));
+  });
+</script>
+
+</body>
+</html>

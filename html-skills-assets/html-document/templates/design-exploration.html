@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Visual Design Exploration</title>
+<style>
+  :root { --ivory:#FAF9F5; --slate:#141413; --clay:#D97757; --olive:#788C5D; --oat:#E3DACC; --gray-150:#F0EEE6; --gray-300:#D1CFC5; --gray-500:#87867F; --gray-700:#3D3D3A; --white:#FFF; --font-sans:system-ui,-apple-system,sans-serif; --font-mono:ui-monospace,Menlo,monospace; }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{font:430 16px/1.55 var(--font-sans);color:var(--slate);background:var(--ivory);max-width:1100px;margin:0 auto;padding:32px 24px;-webkit-font-smoothing:antialiased}
+  h1{font:500 32px/1.2 var(--font-sans);margin-bottom:8px}
+  .subtitle{color:var(--gray-500);font-size:14px;margin-bottom:24px}
+
+  .mode-toggle{display:flex;align-items:center;gap:8px;margin-bottom:24px;font-size:13px;color:var(--gray-500)}
+  .mode-toggle button{font:500 12px/1.4 var(--font-sans);padding:5px 14px;border:1px solid var(--gray-300);border-radius:6px;background:var(--white);cursor:pointer}
+  .mode-toggle button.active{background:var(--slate);color:var(--white);border-color:var(--slate)}
+
+  .design-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px;margin-bottom:32px}
+
+  .design-card{background:var(--white);border:1px solid var(--gray-300);border-radius:12px;overflow:hidden}
+  .design-card .card-preview{padding:28px 24px;min-height:240px;display:flex;flex-direction:column;justify-content:center;border-bottom:1px solid var(--gray-300)}
+  .design-card .card-preview h2{font:500 24px/1.3 var(--font-sans);margin-bottom:8px;}
+  .design-card .card-preview p{font-size:14px;color:var(--gray-500);margin-bottom:20px;line-height:1.5}
+  .design-card .card-preview .cta{display:inline-block;font:500 14px/1.4 var(--font-sans);padding:8px 18px;border-radius:8px;background:var(--slate);color:var(--white);text-decoration:none;align-self:flex-start}
+
+  /* Variant-specific overrides */
+  .variant-b .card-preview{text-align:center}
+  .variant-c .card-preview{background:var(--gray-150)}
+  .variant-d .card-preview h2{font-size:20px}
+  .variant-d .card-preview .cta{background:var(--clay)}
+
+  .card-label{border-top:1px solid var(--gray-300);padding:12px 20px}
+  .card-label .variant-letter{font:500 18px/1.3 var(--font-sans);color:var(--slate);margin-bottom:2px}
+  .card-label .variant-desc{font-size:13px;color:var(--gray-500)}
+
+  .tag{display:inline-block;font:11px var(--font-mono);padding:2px 8px;border-radius:4px;background:var(--gray-150);color:var(--gray-500);margin-right:4px}
+</style>
+</head>
+<body>
+
+<h1><!-- TITLE e.g. "Empty state — four visual directions" --></h1>
+<p class="subtitle"><!-- Project/context label --></p>
+
+<div class="mode-toggle">
+  <span>Background:</span>
+  <button onclick="setMode('light')" id="btn-light" class="active">Light</button>
+  <button onclick="setMode('dark')" id="btn-dark">Dark</button>
+</div>
+
+<div class="design-grid" id="designs">
+
+  <!-- VARIANT A -->
+  <div class="design-card">
+    <div class="card-preview">
+      <h2><!-- Title --></h2>
+      <p><!-- Body copy describing the state --></p>
+      <span class="cta"><!-- CTA label --></span>
+    </div>
+    <div class="card-label">
+      <div class="variant-letter">A — <!-- Variant name --></div>
+      <div class="variant-desc"><!-- Trade-off explanation --></div>
+    </div>
+  </div>
+
+  <!-- VARIANT B -->
+  <div class="design-card variant-b">
+    <div class="card-preview">
+      <h2><!-- Title --></h2>
+      <p><!-- Body copy --></p>
+      <span class="cta"><!-- CTA label --></span>
+    </div>
+    <div class="card-label">
+      <div class="variant-letter">B — <!-- Variant name --></div>
+      <div class="variant-desc"><!-- Trade-off --></div>
+    </div>
+  </div>
+
+  <!-- VARIANT C -->
+  <div class="design-card variant-c">
+    <div class="card-preview">
+      <h2><!-- Title --></h2>
+      <p><!-- Body copy --></p>
+      <span class="cta"><!-- CTA label --></span>
+    </div>
+    <div class="card-label">
+      <div class="variant-letter">C — <!-- Variant name --></div>
+      <div class="variant-desc"><!-- Trade-off --></div>
+    </div>
+  </div>
+
+  <!-- VARIANT D -->
+  <div class="design-card variant-d">
+    <div class="card-preview">
+      <h2><!-- Title --></h2>
+      <p><!-- Body copy --></p>
+      <span class="cta"><!-- CTA label --></span>
+    </div>
+    <div class="card-label">
+      <div class="variant-letter">D — <!-- Variant name --></div>
+      <div class="variant-desc"><!-- Trade-off --></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  function setMode(mode) {
+    const body = document.body;
+    const designs = document.getElementById('designs');
+    if (mode === 'dark') {
+      body.style.background = '#1a1a18';
+      body.style.color = '#E3DACC';
+      designs.querySelectorAll('.design-card').forEach(c => {
+        c.style.background = '#252523';
+        c.style.borderColor = '#3D3D3A';
+        c.querySelector('.card-preview').style.borderColor = '#3D3D3A';
+        c.querySelector('.card-label').style.borderColor = '#3D3D3A';
+      });
+      document.getElementById('btn-dark').classList.add('active');
+      document.getElementById('btn-light').classList.remove('active');
+    } else {
+      body.style.background = '';
+      body.style.color = '';
+      designs.querySelectorAll('.design-card').forEach(c => {
+        c.style.background = '';
+        c.style.borderColor = '';
+        c.querySelector('.card-preview').style.borderColor = '';
+        c.querySelector('.card-label').style.borderColor = '';
+      });
+      document.getElementById('btn-light').classList.add('active');
+      document.getElementById('btn-dark').classList.remove('active');
+    }
+  }
+</script>
+
+</body>
+</html>
