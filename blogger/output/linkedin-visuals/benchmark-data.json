@@ -1,8 +1,0 @@
-[
-  {"label": "SpreadsheetBench", "SkillOpt": 80.7, "Best Baseline": 73.6},
-  {"label": "LiveMath", "SkillOpt": 66.9, "Best Baseline": 58.9},
-  {"label": "SearchQA", "SkillOpt": 82.1, "Best Baseline": 78.3},
-  {"label": "DocVQA", "SkillOpt": 91.3, "Best Baseline": 88.5},
-  {"label": "MATH", "SkillOpt": 76.4, "Best Baseline": 71.2},
-  {"label": "TabMWP", "SkillOpt": 85.2, "Best Baseline": 81.0}
-]

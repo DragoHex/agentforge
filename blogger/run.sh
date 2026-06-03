@@ -105,7 +105,7 @@ case "${1:-}" in
     bash "$0" substack
     bash "$0" linkedin
     ;;
-  draft)  # ./run.sh draft substack output/substack-article.md
+  draft)  # ./run.sh draft output/substack-article.md
     source venv/bin/activate
     INPUT="${2:-output/substack-article.md}"
     # Pre-process: mermaid→PNG, markdown→HTML, collect image paths
@@ -115,5 +115,12 @@ case "${1:-}" in
     # Create draft in Arc's existing Substack session (no new browser, no auth needed)
     python3 -u .pi/skills/publish-draft/publish_substack.py \
       --preprocessed output/draft-preprocessed.json
+    ;;
+  draft-linkedin)  # ./run.sh draft-linkedin output/linkedin-post.md
+    source venv/bin/activate
+    INPUT="${2:-output/linkedin-post.md}"
+    # Create draft in Arc's existing LinkedIn session — never publishes
+    python3 -u .pi/skills/publish-linkedin-draft/publish_linkedin.py \
+      --input "$INPUT"
     ;;
 esac

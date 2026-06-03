@@ -22,6 +22,7 @@ No Fluff: Do not include introductory filler (e.g., "Sure, here is the text") or
 - `/skill:generate-linkedin-post` — Concise plain-text post (150-250 words). Reads from `output/substack-article.md`.
 - `/skill:create-visualization` — Mermaid diagrams, Plotly/Seaborn charts (PNG), Excalidraw JSON, or AI image placeholders.
 - `/skill:publish-draft` — Create a Substack DRAFT from a markdown file using Arc's existing browser session. Runs `./run.sh draft <file>`. Never publishes.
+- `/skill:publish-linkedin-draft` — Create a LinkedIn DRAFT from a markdown file using Arc's existing browser session. Runs `./run.sh draft-linkedin <file>`. Never publishes.
 
 ## Entry Points
 

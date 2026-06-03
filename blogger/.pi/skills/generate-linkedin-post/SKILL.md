@@ -33,9 +33,10 @@ LinkedIn renders plain text, not markdown. Follow these rules exactly:
 ### Required Structure
 
 ```
-[Hook: 1-2 lines. The single most surprising number, claim, or reversal.
+[Hook: 1-2 lines. The core philosophical reversal or the most surprising claim.
+ Lead with the insight, not just a number. A stat can support it but should not be the hook itself.
  Concrete and specific. Not "AI is changing everything." Example:
- "A 27B model with a self-editing skill file just beat GPT-5.5 on 6 benchmarks."]
+ "You have been improving your agent by hand. That is gradient descent without a learning rate."]
 
 [Blank line]
 
@@ -59,6 +60,12 @@ LinkedIn renders plain text, not markdown. Follow these rules exactly:
 [Blank line]
 
 [Closing question or CTA: Invite a reaction. One line. Ends with a question mark.]
+
+[Blank line]
+
+[Substack reference — ONLY if a Substack URL was provided in the prompt:
+ "For a deeper dive, the full breakdown is on Substack: <url>"
+ Omit this line entirely if no URL was given.]
 
 [Blank line]
 
