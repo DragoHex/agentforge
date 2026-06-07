@@ -1,6 +1,6 @@
 ---
 name: generate-linkedin-post
-description: Create a concise, scannable LinkedIn post from source content. Optimized for feed engagement with hook line, short paragraphs, one visual, and a call-to-action.
+description: Create a concise, informative LinkedIn post from source content. Grounded in the technical substance, written for practitioners who value precision over hype.
 ---
 
 Create a LinkedIn post and save to `output/linkedin-post.md`.
@@ -33,8 +33,8 @@ LinkedIn renders plain text, not markdown. Follow these rules exactly:
 ### Required Structure
 
 ```
-[Hook: 1-2 lines. The core philosophical reversal or the most surprising claim.
- Lead with the insight, not just a number. A stat can support it but should not be the hook itself.
+[Hook: 1-2 lines. The core technical insight or the most counterintuitive finding.
+ Lead with a specific claim, not a vague declaration. A stat can support it but should not stand alone.
  Concrete and specific. Not "AI is changing everything." Example:
  "You have been improving your agent by hand. That is gradient descent without a learning rate."]
 
@@ -81,10 +81,7 @@ Use `/skill:create-visualization` for one strong visual:
 - Or a mermaid diagram if numeric data is absent
 - Save to `output/linkedin-visuals/`
 
-Reference with relative path from `output/`:
-```markdown
-![Caption](linkedin-visuals/filename.png)
-```
+**Image rule:** Only reference a `![...](linkedin-visuals/filename.png)` if you actually ran the chart script in this session and the file exists. If you cannot run the script, use `<!-- AI-IMAGE: [prompt] -->` instead. Never invent a PNG path for a file you have not created.
 
 ## Step 4: Validate Diagrams
 

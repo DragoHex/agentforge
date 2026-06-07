@@ -1,6 +1,6 @@
 ---
 name: generate-substack-article
-description: Create a narrative long-form article for SubStack or Medium audiences. Story-driven, data-backed, with visual storytelling and pull quotes.
+description: Create a technically grounded long-form article for SubStack or Medium audiences. Informative and precise, with data-backed arguments and clear explanations of mechanism.
 ---
 
 Create a SubStack/Medium article and save to `output/substack-article.md`.
@@ -24,14 +24,15 @@ Target: **1500–2500 words**. Adhere to every writing constraint in the system 
 ### Required Structure
 
 ```
-# [Compelling headline that promises a specific, surprising insight]
+# [Headline: names the technical contribution or finding precisely. No hype.]
 ### [Subtitle: one line expanding on what the reader will learn]
 
-[Opening: Start with a scene, a specific moment, or a concrete number that creates tension.
- Do not start with "I" or with a generic statement about AI. 2-4 sentences maximum.]
+[Opening: Start with a concrete number, a specific failure mode, or a problem statement
+ that grounds the reader. Do not start with "I" or with a generic statement about AI.
+ 2-4 sentences maximum.]
 
-[Thesis paragraph: State the big idea explicitly. What does this work prove or break?
- One paragraph. No hedging.]
+[Thesis paragraph: State the core claim explicitly. What does this work establish or change?
+ One paragraph. No hedging, but no overreach either.]
 
 ## [Section 1 title — establish the problem]
 [What was the accepted approach before? Why was it insufficient? Include a chart or
@@ -72,10 +73,7 @@ Use `/skill:create-visualization` for:
 - 1 data visualization (Python chart) for the evidence section → `output/substack-visuals/`
 - 1 mermaid diagram for the mechanism section
 
-Reference saved visuals with relative paths from `output/`:
-```markdown
-![Caption](substack-visuals/filename.png)
-```
+**Image rule:** Only reference a `![...](substack-visuals/filename.png)` if you actually ran `generate_graph.py` in this session and the file exists. If you cannot run the script, use `<!-- AI-IMAGE: [prompt] -->` instead. Never invent a PNG path for a file you have not created.
 
 ## Step 4: Validate Diagrams
 
