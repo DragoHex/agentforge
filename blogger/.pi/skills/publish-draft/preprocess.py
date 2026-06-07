@@ -71,6 +71,124 @@ def render_mermaid_blocks(md: str, input_dir: Path, asset_dir: Path) -> str:
     return re.sub(pattern, replace, md, flags=re.DOTALL)
 
 
+def render_mermaid_file_refs(md: str, input_dir: Path, asset_dir: Path) -> str:
+    """Replace ![caption](*.mermaid) file references with rendered PNG references."""
+    pattern = r"!\[([^\]]*)\]\(([^)]+\.mermaid)\)"
+
+    def replace(match):
+        caption = match.group(1)
+        ref_path = match.group(2)
+        # Resolve relative to input_dir, falling back to its parent
+        candidates = [
+            input_dir / ref_path,
+            input_dir.parent / ref_path,
+        ]
+        mermaid_file = next((p for p in candidates if p.exists()), None)
+        if mermaid_file is None:
+            print(f"[preprocess] WARNING: .mermaid file not found: {ref_path}", file=sys.stderr)
+            return match.group(0)
+
+        code = mermaid_file.read_text().strip()
+        slug = hashlib.md5(code.encode()).hexdigest()[:8]
+        png_path = asset_dir / f"mermaid-{slug}.png"
+        rel = os.path.relpath(png_path, input_dir)
+
+        if png_path.exists():
+            return f"![{caption}]({rel})"
+
+        rendered = False
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".mmd", delete=False) as f:
+            f.write(code)
+            tmp = f.name
+        try:
+            r = subprocess.run(
+                ["mmdc", "-i", tmp, "-o", str(png_path), "-b", "white", "-w", "1200"],
+                capture_output=True, text=True, timeout=30,
+            )
+            if r.returncode == 0:
+                rendered = True
+            else:
+                print(f"[preprocess] mmdc error: {r.stderr}", file=sys.stderr)
+        except FileNotFoundError:
+            print("[preprocess] mmdc not found; falling back to mermaid.ink", file=sys.stderr)
+        finally:
+            if os.path.exists(tmp):
+                os.unlink(tmp)
+
+        if not rendered:
+            try:
+                import base64
+                import urllib.request
+                encoded = base64.urlsafe_b64encode(code.encode()).decode()
+                url = f"https://mermaid.ink/img/{encoded}?type=png"
+                req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+                with urllib.request.urlopen(req, timeout=15) as resp:
+                    png_path.write_bytes(resp.read())
+                rendered = True
+                print(f"[preprocess] mermaid.ink rendered: {png_path.name}", file=sys.stderr)
+            except Exception as e:
+                print(f"[preprocess] mermaid.ink failed: {e}. Reference kept as-is.", file=sys.stderr)
+                return match.group(0)
+
+        if not rendered:
+            return match.group(0)
+        return f"![{caption}]({rel})"
+
+    return re.sub(pattern, replace, md)
+
+
+def render_missing_charts(md: str, input_dir: Path) -> str:
+    """
+    For any local PNG reference that is missing, check for a .params.json sidecar
+    written by generate_graph.py and re-run the script to regenerate the chart.
+    Mermaid PNGs are handled separately by render_mermaid_blocks / render_mermaid_file_refs.
+    """
+    generate_graph = (
+        Path(__file__).parent.parent / "create-visualization" / "generate_graph.py"
+    ).resolve()
+
+    pattern = r"!\[([^\]]*)\]\(([^)]+\.(?:png|jpg|jpeg))\)"
+
+    def replace(match):
+        ref = match.group(2)
+        if ref.startswith("http"):
+            return match.group(0)
+        target = (input_dir / ref).resolve()
+        if target.exists():
+            return match.group(0)
+
+        sidecar = target.with_suffix(".params.json")
+        if not sidecar.exists():
+            print(f"[preprocess] WARNING: missing image, no sidecar: {ref}", file=sys.stderr)
+            return match.group(0)
+
+        params = json.loads(sidecar.read_text())
+        cmd = [sys.executable, str(generate_graph),
+               "--type", params["type"],
+               "--title", params.get("title", "Chart"),
+               "--output", str(target)]
+        if "data_file" in params:
+            cmd += ["--data-file", params["data_file"]]
+        else:
+            cmd += ["--data", json.dumps(params["data"])]
+
+        r = subprocess.run(cmd, capture_output=True, text=True)
+        if r.returncode == 0:
+            print(f"[preprocess] Regenerated chart: {target.name}", file=sys.stderr)
+        else:
+            print(f"[preprocess] Chart regen failed for {target.name}: {r.stderr.strip()}",
+                  file=sys.stderr)
+        return match.group(0)
+
+    return re.sub(pattern, replace, md)
+
+
+def strip_ai_image_placeholders(md: str) -> str:
+    """Remove <!-- AI-IMAGE: ... --> comments before draft publishing. They are invisible
+    in rendered HTML anyway, but removing them keeps the Prosemirror doc clean."""
+    return re.sub(r"<!--\s*AI-IMAGE:.*?-->", "", md, flags=re.DOTALL)
+
+
 def strip_excalidraw_refs(md: str) -> str:
     """Replace .excalidraw image references with italic placeholder text."""
     def replace(m):
@@ -80,9 +198,36 @@ def strip_excalidraw_refs(md: str) -> str:
     return re.sub(r"!\[([^\]]*)\]\(([^)]+\.excalidraw)\)", replace, md)
 
 
-def strip_ai_image_placeholders(md: str) -> str:
-    """Remove <!-- AI-IMAGE: ... --> comments, leaving no gap."""
-    return re.sub(r"<!--\s*AI-IMAGE:[^>]*-->", "", md)
+def download_http_images(md: str, input_dir: Path, asset_dir: Path) -> str:
+    """Download http/https image URLs and replace with local relative paths."""
+    import urllib.request as _urlreq
+    from urllib.parse import urlparse
+
+    pattern = r"!\[([^\]]*)\]\((https?://[^)]+)\)"
+
+    def replace(match):
+        caption = match.group(1)
+        url = match.group(2)
+        parsed = urlparse(url)
+        ext = Path(parsed.path).suffix or ".png"
+        slug = hashlib.md5(url.encode()).hexdigest()[:12]
+        local_path = asset_dir / f"web-{slug}{ext}"
+        rel = os.path.relpath(local_path, input_dir)
+
+        if local_path.exists():
+            return f"![{caption}]({rel})"
+
+        try:
+            req = _urlreq.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+            with _urlreq.urlopen(req, timeout=20) as resp:
+                local_path.write_bytes(resp.read())
+            print(f"[preprocess] Downloaded: {local_path.name}  ← {url}", file=sys.stderr)
+            return f"![{caption}]({rel})"
+        except Exception as e:
+            print(f"[preprocess] WARNING: could not download {url}: {e}", file=sys.stderr)
+            return match.group(0)
+
+    return re.sub(pattern, replace, md)
 
 
 def extract_title_subtitle(md: str) -> tuple:
@@ -291,6 +436,11 @@ def main():
     parser.add_argument("--input", required=True, help="Input markdown file")
     parser.add_argument("--output", help="Output JSON path (default: stdout)")
     parser.add_argument("--asset-dir", help="Dir for generated PNG assets")
+    parser.add_argument(
+        "--render-only",
+        action="store_true",
+        help="Only render mermaid/images and update the markdown in-place. Skip HTML/JSON conversion.",
+    )
     args = parser.parse_args()
 
     input_file = Path(args.input).resolve()
@@ -299,11 +449,37 @@ def main():
         sys.exit(1)
 
     input_dir = input_file.parent
+
+    if args.render_only:
+        # Derive a per-article visuals directory from the file stem, e.g.
+        # output/teaching-article.md  → output/teaching-visuals/
+        # output/substack-article.md  → output/substack-visuals/
+        # output/linkedin-post.md     → output/linkedin-visuals/
+        stem = input_file.stem                        # "teaching-article"
+        section = stem.split("-")[0]                  # "teaching"
+        default_asset_dir = input_dir / f"{section}-visuals"
+        asset_dir = Path(args.asset_dir).resolve() if args.asset_dir else default_asset_dir
+        asset_dir.mkdir(parents=True, exist_ok=True)
+
+        md = input_file.read_text()
+        md = download_http_images(md, input_dir, asset_dir)
+        md = render_mermaid_file_refs(md, input_dir, asset_dir)
+        md = render_mermaid_blocks(md, input_dir, asset_dir)
+        render_missing_charts(md, input_dir)
+        input_file.write_text(md)
+        images = collect_image_paths(md, input_dir)
+        print(f"[preprocess] render-only: updated {input_file.name}", file=sys.stderr)
+        print(f"[preprocess] Images found: {len(images)}", file=sys.stderr)
+        return
+
     asset_dir = Path(args.asset_dir).resolve() if args.asset_dir else input_dir / "draft-assets"
     asset_dir.mkdir(parents=True, exist_ok=True)
 
     md = input_file.read_text()
+    md = download_http_images(md, input_dir, asset_dir)
+    md = render_mermaid_file_refs(md, input_dir, asset_dir)
     md = render_mermaid_blocks(md, input_dir, asset_dir)
+    render_missing_charts(md, input_dir)
     md = strip_excalidraw_refs(md)
     md = strip_ai_image_placeholders(md)
 

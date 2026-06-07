@@ -78,10 +78,7 @@ Use `/skill:create-visualization` for:
 - 1 Python chart (Plotly/Seaborn) for any numeric benchmark data → save to `output/teaching-visuals/`
 - AI image placeholder for any complex conceptual illustration: `<!-- AI-IMAGE: [detailed prompt] -->`
 
-Reference all saved visuals with relative paths from `output/`:
-```markdown
-![Chart Title](teaching-visuals/filename.png)
-```
+**Image rule:** Mermaid diagrams must be embedded as fenced ` ```mermaid ``` ` code blocks — never as `.mermaid` file references. Only reference a `![...](path.png)` if you actually ran a script in this session that created that file. If you cannot run a script, use `<!-- AI-IMAGE: [prompt] -->` instead.
 
 ## Step 4: Validate Diagrams
 

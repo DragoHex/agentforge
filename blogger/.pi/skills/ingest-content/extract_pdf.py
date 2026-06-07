@@ -146,6 +146,50 @@ def extract_pypdf(path: str) -> str:
     return "\n\n".join(pages)
 
 
+def extract_images_from_pdf(path: str, output_dir: str) -> list:
+    """
+    Extract embedded images from a PDF using PyMuPDF.
+    Saves to <output_dir>/source-images/ and returns a list of
+    (page_num, rel_path, width, height) tuples.
+    Skips tiny images (icons/decorations under 80px on either side).
+    """
+    try:
+        import fitz
+    except ImportError:
+        return []
+
+    images_dir = os.path.join(output_dir, "source-images")
+    os.makedirs(images_dir, exist_ok=True)
+
+    doc = fitz.open(path)
+    saved = []
+    seen_xrefs: set = set()
+
+    for page_num, page in enumerate(doc, 1):
+        for img_info in page.get_images(full=True):
+            xref = img_info[0]
+            if xref in seen_xrefs:
+                continue
+            seen_xrefs.add(xref)
+            try:
+                info = doc.extract_image(xref)
+                w, h = info["width"], info["height"]
+                if w < 80 or h < 80:
+                    continue
+                ext = info["ext"]
+                filename = f"page{page_num:02d}-img{xref}.{ext}"
+                filepath = os.path.join(images_dir, filename)
+                with open(filepath, "wb") as f:
+                    f.write(info["image"])
+                rel = os.path.relpath(filepath, output_dir)
+                saved.append((page_num, rel, w, h))
+            except Exception as e:
+                print(f"  Warning: could not extract image xref={xref}: {e}", file=sys.stderr)
+
+    doc.close()
+    return saved
+
+
 def main():
     parser = argparse.ArgumentParser(description="Extract text from PDF files")
     parser.add_argument("path", help="Path to the PDF file")
@@ -196,7 +240,18 @@ def main():
 """
 
     if args.output:
-        os.makedirs(os.path.dirname(args.output) or ".", exist_ok=True)
+        output_dir = os.path.dirname(os.path.abspath(args.output))
+        os.makedirs(output_dir, exist_ok=True)
+
+        # Extract images alongside the text
+        images = extract_images_from_pdf(args.path, output_dir)
+        if images:
+            img_section = "\n## Source Images (Extracted from PDF)\n\n"
+            for page_num, rel, w, h in images:
+                img_section += f"- Page {page_num} ({w}x{h}): ![Extracted image]({rel})\n"
+            result += img_section
+            print(f"Extracted {len(images)} embedded image(s) to {output_dir}/source-images/")
+
         with open(args.output, "w") as f:
             f.write(result)
         print(f"Extracted text saved to {args.output} ({page_count} pages, {lib_used})")

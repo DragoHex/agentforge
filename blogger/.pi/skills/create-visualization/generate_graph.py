@@ -195,6 +195,17 @@ def main():
         print(f"Error generating chart: {e}", file=sys.stderr)
         sys.exit(1)
 
+    # Write sidecar so the render pass can regenerate this chart if the PNG goes missing.
+    sidecar = os.path.splitext(args.output)[0] + ".params.json"
+    params = {"type": args.type, "title": args.title, "output": os.path.abspath(args.output)}
+    if args.data_file:
+        params["data_file"] = os.path.abspath(args.data_file)
+    else:
+        params["data"] = data
+    with open(sidecar, "w") as f:
+        json.dump(params, f, indent=2)
+    print(f"Params saved to {sidecar}")
+
 
 if __name__ == "__main__":
     main()
