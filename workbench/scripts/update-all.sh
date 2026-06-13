@@ -6,11 +6,15 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-LOG_FILE="$SCRIPT_DIR/../data/update.log"
+source "$SCRIPT_DIR/load-config.sh" "${PROJECT_ID:-}"
+
+# WORKBENCH_DATA_DIR is now set by load-config.sh
+DATA_DIR="$WORKBENCH_DATA_DIR"
+LOG_FILE="$DATA_DIR/update.log"
 
 log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*" | tee -a "$LOG_FILE"; }
 
-mkdir -p "$SCRIPT_DIR/../data/jira"
+mkdir -p "$DATA_DIR/jira"
 : > "$LOG_FILE"
 
 log "=== Workbench data refresh started ==="
@@ -22,13 +26,13 @@ log "--- Step 2/4: Fetching JIRA sprint ---"
 bash "$SCRIPT_DIR/fetch-jira.sh" 2>&1 | tee -a "$LOG_FILE"
 
 log "--- Step 3/4: Fetching JIRA ticket details ---"
-bash "$SCRIPT_DIR/fetch-jira-detail.sh" --all 2>&1 | tee -a "$LOG_FILE"
+PROJECT_ID="${PROJECT_ID:-}" bash "$SCRIPT_DIR/fetch-jira-detail.sh" --all 2>&1 | tee -a "$LOG_FILE"
 
 log "--- Step 4/4: Fetching active PRs ---"
-bash "$SCRIPT_DIR/fetch-prs.sh" 2>&1 | tee -a "$LOG_FILE"
+PROJECT_ID="${PROJECT_ID:-}" bash "$SCRIPT_DIR/fetch-prs.sh" 2>&1 | tee -a "$LOG_FILE"
 
 # Write a metadata file so the UI can show last-updated time
-python3 - "$SCRIPT_DIR/../data" <<'PYEOF'
+python3 - "$DATA_DIR" <<'PYEOF'
 import json, os, sys
 from datetime import datetime, timezone
 
@@ -64,6 +68,6 @@ PYEOF
 
 log "=== Refresh complete ==="
 echo ""
-echo "Workbench data at: $SCRIPT_DIR/../data/"
-echo "  worktrees.json  last updated: $(date -r "$SCRIPT_DIR/../data/worktrees.json" '+%Y-%m-%d %H:%M:%S')"
-echo "  sprint.json     last updated: $(date -r "$SCRIPT_DIR/../data/sprint.json" '+%Y-%m-%d %H:%M:%S')"
+echo "Workbench data at: $DATA_DIR/"
+echo "  worktrees.json  last updated: $(date -r "$DATA_DIR/worktrees.json" '+%Y-%m-%d %H:%M:%S')"
+echo "  sprint.json     last updated: $(date -r "$DATA_DIR/sprint.json" '+%Y-%m-%d %H:%M:%S')"

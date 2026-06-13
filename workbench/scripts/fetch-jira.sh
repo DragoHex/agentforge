@@ -4,9 +4,9 @@
 
 set -euo pipefail
 
-source "$(dirname "${BASH_SOURCE[0]}")/load-config.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/load-config.sh" "${PROJECT_ID:-}"
 
-OUT_DIR="$(dirname "$0")/../data"
+OUT_DIR="$WORKBENCH_DATA_DIR"
 OUT_FILE="$OUT_DIR/sprint.json"
 
 mkdir -p "$OUT_DIR"

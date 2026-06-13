@@ -9,10 +9,9 @@
 
 set -euo pipefail
 
-source "$(dirname "${BASH_SOURCE[0]}")/load-config.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/load-config.sh" "${PROJECT_ID:-}"
 
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-DATA_DIR="$SCRIPT_DIR/../data"
+DATA_DIR="$WORKBENCH_DATA_DIR"
 OUT_FILE="$DATA_DIR/prs.json"
 TMPD=$(mktemp -d /tmp/wb_prs_XXXXXX)
 trap 'rm -rf "$TMPD"' EXIT

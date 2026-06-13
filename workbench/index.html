@@ -26,8 +26,28 @@
   }
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
   body{font:430 16px/1.55 var(--font-sans);color:var(--slate);background:var(--ivory);
-       max-width:1200px;margin:0 auto;padding:var(--sp-6) var(--sp-5);
-       -webkit-font-smoothing:antialiased;transition:background .2s,color .2s}
+       -webkit-font-smoothing:antialiased;transition:background .2s,color .2s;
+       display:flex;min-height:100vh}
+
+  /* ── Sidebar ── */
+  .sidebar{width:200px;min-width:200px;background:var(--white);border-right:1px solid var(--gray-300);
+           padding:var(--sp-4) 0;display:flex;flex-direction:column;position:sticky;top:0;
+           height:100vh;overflow-y:auto;flex-shrink:0}
+  .sidebar-logo{font:600 14px var(--font-sans);color:var(--slate);padding:var(--sp-2) var(--sp-4) var(--sp-4);
+                display:block;border-bottom:1px solid var(--gray-150);margin-bottom:var(--sp-3)}
+  .sidebar-label{font:500 10px var(--font-sans);color:var(--gray-500);padding:0 var(--sp-4) var(--sp-1);
+                 text-transform:uppercase;letter-spacing:.06em}
+  .project-list{list-style:none;padding:0;margin:0}
+  .project-item a{display:flex;align-items:center;gap:var(--sp-2);padding:7px var(--sp-4);
+                  font:430 13px var(--font-sans);color:var(--gray-700);text-decoration:none;
+                  transition:background .12s,color .12s}
+  .project-item a:hover{background:var(--gray-150);color:var(--slate)}
+  .project-item.active a{background:rgba(217,119,87,.08);color:var(--clay);font-weight:500}
+  .project-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+  .sidebar-loading{font:12px var(--font-sans);color:var(--gray-500);padding:var(--sp-2) var(--sp-4)}
+
+  /* ── Main content area ── */
+  .main-content{flex:1;max-width:1200px;padding:var(--sp-6) var(--sp-5);min-width:0}
 
   /* ── Header ── */
   .header{display:flex;align-items:center;justify-content:space-between;
@@ -269,6 +289,16 @@
 </head>
 <body>
 
+<nav id="project-sidebar" class="sidebar" aria-label="Projects">
+  <span class="sidebar-logo">Workbench</span>
+  <div class="sidebar-label">Projects</div>
+  <ul id="project-list" class="project-list">
+    <li class="sidebar-loading">Loading…</li>
+  </ul>
+</nav>
+
+<div class="main-content">
+
 <div class="header">
   <div class="header-left">
     <div class="header-title">Dev Workbench</div>
@@ -364,16 +394,76 @@
 </div>
 
 <script>
-const BASE = window.location.pathname.replace(/\/[^/]*$/, '');
-const DATA = BASE + '/data';
+// ── Project context ────────────────────────────────────────────────────────
+const API_BASE = '/api';
+
+function getCurrentProjectId() {
+  // URL: /workbench/<project_id>/  or  ?project=<id>  or  localStorage fallback
+  const m = window.location.pathname.match(/\/workbench\/([a-z0-9\-]+)/);
+  if (m) return m[1];
+  const qp = new URLSearchParams(window.location.search).get('project');
+  if (qp) return qp;
+  return localStorage.getItem('wb-active-project') || 'avi-network';
+}
+
+let _projectId = getCurrentProjectId();
+
+function dataUrl(resource) {
+  return `${API_BASE}/${_projectId}/data/${resource}`;
+}
+
+// ── Sidebar ────────────────────────────────────────────────────────────────
+async function initSidebar() {
+  try {
+    const r = await fetch(`${API_BASE}/projects`, { cache: 'no-store' });
+    if (!r.ok) return;
+    const projects = await r.json();
+    const list = document.getElementById('project-list');
+    list.innerHTML = projects.map(p => `
+      <li class="project-item${p.id === _projectId ? ' active' : ''}">
+        <a href="?project=${encodeURIComponent(p.id)}"
+           onclick="return switchProject(event,'${escHtml(p.id)}')">
+          <span class="project-dot" style="background:${escHtml(p.color)}"></span>
+          <span>${escHtml(p.display_name)}</span>
+        </a>
+      </li>`).join('');
+  } catch (_) {
+    document.getElementById('project-list').innerHTML =
+      '<li class="sidebar-loading">Offline</li>';
+  }
+}
+
+function switchProject(e, pid) {
+  e.preventDefault();
+  _projectId = pid;
+  localStorage.setItem('wb-active-project', pid);
+  document.querySelectorAll('.project-item').forEach(li =>
+    li.classList.toggle('active', li.querySelector('a[onclick]')?.getAttribute('onclick')?.includes(`'${pid}'`))
+  );
+  loadAll(true);
+  return false;
+}
 
 // ── Config ─────────────────────────────────────────────────────────────────
 window.WB_CONFIG = {};
 async function loadConfig() {
   try {
-    const r = await fetch(BASE + '/config.json', { cache: 'no-store' });
-    if (r.ok) window.WB_CONFIG = await r.json();
-  } catch (_) { /* fall back to empty — hardcoded defaults remain in template strings */ }
+    const r = await fetch(`${API_BASE}/${_projectId}/config`, { cache: 'no-store' });
+    if (r.ok) {
+      const cfg = await r.json();
+      // Map new config shape to legacy WB_CONFIG keys
+      window.WB_CONFIG = {
+        jira_host:     cfg.jira_host,
+        gh_host:       cfg.gh_host,
+        gh_org:        cfg.gh_org,
+        gh_repo_dev:   cfg.repos?.dev  || 'avi-dev',
+        gh_repo_test:  cfg.repos?.test || 'avi-test',
+        dsr_host:      cfg.dsr_host,
+        workspace_dir: cfg.workspace_dir,
+        workbench_dir: '',   // no longer a web path
+      };
+    }
+  } catch (_) { /* fall back to empty config — rendering uses safe defaults */ }
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -578,22 +668,38 @@ async function colDrop(e) {
 
   // ── 2. BACKGROUND: call Jira API asynchronously ────────────────────────────
   try {
-    const r   = await fetch(
-      `/workbench/api/transition-ticket?ticket_id=${encodeURIComponent(ticketKey)}&target_status=${encodeURIComponent(targetStatus)}`,
-      { method: 'POST' }
-    );
+    const r = await fetch(`${API_BASE}/${_projectId}/jobs`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'transition-ticket',
+        params: { ticket_id: ticketKey, target_status: targetStatus },
+      }),
+    });
     const res = await r.json();
-    if (!res.ok) {
-      // ── 3a. ROLLBACK: API reported failure ───────────────────────────────────
+    if (!r.ok || res.error) {
       _rollbackCard(card, origColEl, origNextSib, targetColEl);
-      const msg = (res.output || '').split('\n').find(l => l.startsWith('ERROR')) || 'Script failed';
-      _showTransitionError(`${ticketKey}: ${msg}`);
+      _showTransitionError(`${ticketKey}: ${res.error || 'Script failed'}`);
+      return;
+    }
+    // Poll job to completion (transition is fast — no SSE needed here)
+    const job_id = res.job_id;
+    for (let i = 0; i < 30; i++) {
+      await new Promise(r => setTimeout(r, 1000));
+      const jr = await fetch(`${API_BASE}/${_projectId}/jobs/${job_id}`).then(r => r.json());
+      if (jr.status === 'done') break;
+      if (jr.status === 'failed' || jr.status === 'error') {
+        _rollbackCard(card, origColEl, origNextSib, targetColEl);
+        const msg = (jr.stdout || '').split('\n').find(l => l.startsWith('ERROR')) || 'Script failed';
+        _showTransitionError(`${ticketKey}: ${msg}`);
+        return;
+      }
     }
     // On success the card is already where the user put it — nothing else needed.
   } catch (_) {
     // ── 3b. ROLLBACK: network/server error ──────────────────────────────────
     _rollbackCard(card, origColEl, origNextSib, targetColEl);
-    _showTransitionError(`${ticketKey}: server offline — run scripts/start-server.sh`);
+    _showTransitionError(`${ticketKey}: server offline — run scripts/start-api.sh`);
   }
 }
 
@@ -824,10 +930,10 @@ async function loadAll(skipConfig) {
   if (!skipConfig) await loadConfig();
   try {
     const [metaRes, wtRes, sprintRes, prRes] = await Promise.all([
-      fetch(DATA + '/meta.json?t='      + Date.now(), { cache: 'no-store' }),
-      fetch(DATA + '/worktrees.json?t=' + Date.now(), { cache: 'no-store' }),
-      fetch(DATA + '/sprint.json?t='    + Date.now(), { cache: 'no-store' }),
-      fetch(DATA + '/prs.json?t='       + Date.now(), { cache: 'no-store' }),
+      fetch(dataUrl('meta'),     { cache: 'no-store' }),
+      fetch(dataUrl('worktrees'),{ cache: 'no-store' }),
+      fetch(dataUrl('sprint'),   { cache: 'no-store' }),
+      fetch(dataUrl('prs'),      { cache: 'no-store' }),
     ]);
 
     if (metaRes.ok) {
@@ -890,38 +996,56 @@ window.addEventListener('storage', e => {
 });
 
 // ── Refresh button ─────────────────────────────────────────────────────────
-function refreshData() {
+async function refreshData() {
   const btn    = document.getElementById('btn-refresh');
   const status = document.getElementById('refresh-status');
   btn.classList.add('loading');
   btn.textContent = '↻ Refreshing…';
   status.textContent = 'Running scripts…';
 
-  fetch('/workbench/api/refresh', { method: 'POST' })
-    .then(r => r.json())
-    .then(res => {
-      btn.classList.remove('loading');
-      btn.textContent = '↻ Refresh';
-      if (res.ok) {
-        status.textContent = '✓ Done';
-        loadAll(true);
-        setTimeout(() => { status.textContent = ''; }, 3000);
-      } else {
-        status.textContent = '✗ Scripts failed — check data/server.log';
-        setTimeout(() => { status.textContent = ''; }, 6000);
-      }
-    })
-    .catch(() => {
-      btn.classList.remove('loading');
-      btn.textContent = '↻ Refresh';
-      const wbDir = (window.WB_CONFIG.workbench_dir || '/var/www/html/workbench');
-      status.textContent = 'Server offline — run: bash ' + wbDir + '/scripts/start-server.sh';
-      loadAll();
-      setTimeout(() => { status.textContent = ''; }, 8000);
+  try {
+    const trigRes = await fetch(`${API_BASE}/${_projectId}/jobs`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'update-all' }),
     });
+    if (!trigRes.ok) throw new Error(`HTTP ${trigRes.status}`);
+    const { job_id } = await trigRes.json();
+
+    // Stream progress via SSE
+    await new Promise((resolve, reject) => {
+      const es = new EventSource(`${API_BASE}/${_projectId}/jobs/stream/${job_id}`);
+      es.addEventListener('log', e => {
+        const line = JSON.parse(e.data).line;
+        if (line) status.textContent = line.slice(-80);
+      });
+      es.addEventListener('status', e => {
+        es.close();
+        const { status: s } = JSON.parse(e.data);
+        s === 'done' ? resolve() : reject(new Error(s));
+      });
+      es.addEventListener('error', () => { es.close(); reject(new Error('stream error')); });
+      setTimeout(() => { es.close(); reject(new Error('timeout')); }, 300_000);
+    });
+
+    btn.classList.remove('loading');
+    btn.textContent = '↻ Refresh';
+    status.textContent = '✓ Done';
+    loadAll(true);
+    setTimeout(() => { status.textContent = ''; }, 3000);
+
+  } catch (err) {
+    btn.classList.remove('loading');
+    btn.textContent = '↻ Refresh';
+    status.textContent = err.message.includes('fetch') || err.message.includes('HTTP')
+      ? 'Server offline — run: bash scripts/start-api.sh'
+      : `✗ Failed: ${err.message}`;
+    setTimeout(() => { status.textContent = ''; }, 8000);
+  }
 }
 
-loadAll();
+initSidebar().then(() => loadAll());
 </script>
+</div><!-- .main-content -->
 </body>
 </html>
