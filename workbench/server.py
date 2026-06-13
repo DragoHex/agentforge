@@ -10,6 +10,7 @@ Usage:
 Endpoints:
     GET  /api/status
     GET  /api/projects
+    GET  /api/llm-providers
     GET  /api/<project>/config
     GET  /api/<project>/data/<resource>     (sprint|worktrees|prs|meta|jira/<AV-ID>)
     GET  /api/<project>/jobs
@@ -48,7 +49,184 @@ _RE_JIRA    = re.compile(r'^[A-Z]{2,10}-\d{1,6}$')
 _RE_WKTREE  = re.compile(r'^[a-zA-Z0-9_\-\.]{1,64}$')
 _RE_PROJECT = re.compile(r'^[a-z0-9\-]{1,32}$')
 _RE_JOB_ID  = re.compile(r'^[a-z0-9\-]{4,64}$')
+_RE_COLOR   = re.compile(r'^#[0-9A-Fa-f]{6}$')
+_RE_DISPLAY = re.compile(r'^[^\x00-\x1f]{1,64}$')
 _STATUSES   = frozenset(('todo', 'in_progress', 'done'))
+
+# ── Project config helpers ─────────────────────────────────────────────────────
+
+def _build_yaml_dict(body: dict) -> dict:
+    """Reconstruct nested YAML structure from a flat API request body."""
+    return {
+        "project_id":   body["project_id"],
+        "display_name": body["display_name"],
+        "color":        body.get("color", "#888888"),
+        "enabled":      True,
+        "workspace": {
+            "dir":      body.get("workspace_dir", ""),
+            "data_dir": body.get("data_dir", ""),
+        },
+        "integrations": {
+            "jira": {
+                "host":        body.get("jira_host", ""),
+                "project_key": body.get("jira_project_key", ""),
+            },
+            "github": {
+                "host": body.get("gh_host", ""),
+                "org":  body.get("gh_org", ""),
+                "repos": {
+                    "dev":  body.get("repo_dev", ""),
+                    "test": body.get("repo_test", ""),
+                },
+            },
+            "dsr": {"host": body.get("dsr_host", "")},
+        },
+        "llm": {
+            "provider": body.get("llm_provider", ""),
+            "model":    body.get("llm_model", ""),
+        },
+        "ports": {
+            "api_port":    int(body["api_port"])    if body.get("api_port")    else 8081,
+            "server_port": int(body["server_port"]) if body.get("server_port") else 1337,
+        },
+    }
+
+
+def _validate_project_body(body: dict):
+    """Validate a flat project body. Returns (cleaned_dict, None) or (None, error_str)."""
+    pid     = body.get("project_id", "")
+    display = body.get("display_name", "")
+    color   = body.get("color", "#888888")
+    errors  = []
+    if not _RE_PROJECT.match(pid):
+        errors.append("project_id must match [a-z0-9-]{1,32}")
+    if not display or not _RE_DISPLAY.match(display):
+        errors.append("display_name required, max 64 printable chars")
+    if not _RE_COLOR.match(color):
+        errors.append("color must be a hex #RRGGBB value")
+    if errors:
+        return None, "; ".join(errors)
+    return _build_yaml_dict(body), None
+
+
+# ── LLM provider detection ─────────────────────────────────────────────────────
+
+def _detect_llm_providers() -> list:
+    """Detect available LLM providers on this system."""
+    import shutil, socket as _socket
+
+    providers = []
+
+    # Anthropic — Claude Code CLI or API key / config dir
+    if shutil.which("claude") or os.environ.get("ANTHROPIC_API_KEY") or \
+            os.path.isdir(os.path.expanduser("~/.config/anthropic")):
+        label = "Anthropic (Claude Code)" if shutil.which("claude") else "Anthropic"
+        providers.append({
+            "id":     "anthropic",
+            "name":   label,
+            "models": [
+                "claude-sonnet-4-6",
+                "claude-opus-4-8",
+                "claude-haiku-4-5-20251001",
+                "claude-fable-5",
+            ],
+        })
+
+    # Cursor Agent — `agent` CLI
+    if shutil.which("agent"):
+        cursor_models = []
+        try:
+            result = subprocess.run(
+                ["agent", "models"], capture_output=True, text=True, timeout=8
+            )
+            if result.returncode == 0:
+                for line in result.stdout.splitlines():
+                    # Each line: "<model-id> - <Human Name>" or blank/header
+                    if " - " in line:
+                        model_id = line.split(" - ", 1)[0].strip()
+                        if model_id:
+                            cursor_models.append(model_id)
+        except Exception:
+            pass
+        providers.append({
+            "id":     "cursor",
+            "name":   "Cursor Agent",
+            "models": cursor_models,
+        })
+
+    # OpenAI — API key or CLI
+    if os.environ.get("OPENAI_API_KEY") or shutil.which("openai"):
+        providers.append({
+            "id":     "openai",
+            "name":   "OpenAI",
+            "models": ["gpt-4o", "gpt-4o-mini", "gpt-4-turbo", "o1", "o1-mini", "o3-mini"],
+        })
+
+    # Google — API key or gemini CLI
+    if os.environ.get("GOOGLE_API_KEY") or os.environ.get("GEMINI_API_KEY") or shutil.which("gemini"):
+        providers.append({
+            "id":     "google",
+            "name":   "Google",
+            "models": ["gemini-2.0-flash", "gemini-2.0-flash-lite", "gemini-1.5-pro", "gemini-1.5-flash"],
+        })
+
+    # Ollama — CLI or port 11434 open
+    ollama_models = []
+    if shutil.which("ollama"):
+        try:
+            result = subprocess.run(
+                ["ollama", "list"], capture_output=True, text=True, timeout=5
+            )
+            if result.returncode == 0:
+                for line in result.stdout.strip().splitlines()[1:]:  # skip header
+                    parts = line.split()
+                    if parts:
+                        ollama_models.append(parts[0])
+        except Exception:
+            pass
+    if not ollama_models:
+        try:
+            s = _socket.create_connection(("127.0.0.1", 11434), timeout=1)
+            s.close()
+            ollama_models = []  # running but list failed; still surface the provider
+        except Exception:
+            pass
+    if shutil.which("ollama") or ollama_models:
+        providers.append({
+            "id":     "ollama",
+            "name":   "Ollama (local)",
+            "models": ollama_models,
+        })
+
+    # AWS Bedrock — aws CLI + credentials
+    if shutil.which("aws") and (
+        os.path.exists(os.path.expanduser("~/.aws/credentials")) or
+        os.environ.get("AWS_ACCESS_KEY_ID")
+    ):
+        providers.append({
+            "id":     "bedrock",
+            "name":   "AWS Bedrock",
+            "models": [
+                "anthropic.claude-3-5-sonnet-20241022-v2:0",
+                "anthropic.claude-3-opus-20240229-v1:0",
+                "amazon.titan-text-express-v1",
+            ],
+        })
+
+    # LM Studio — port 1234
+    try:
+        s = _socket.create_connection(("127.0.0.1", 1234), timeout=1)
+        s.close()
+        providers.append({
+            "id":     "lm-studio",
+            "name":   "LM Studio (local)",
+            "models": [],  # dynamic; user must enter model name
+        })
+    except Exception:
+        pass
+
+    return providers
+
 
 # ── Project registry ──────────────────────────────────────────────────────────
 
@@ -230,7 +408,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def _cors(self):
         self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
         self.send_header("Access-Control-Allow-Headers", "Content-Type, X-WB-Project")
 
     def do_OPTIONS(self):
@@ -293,12 +471,43 @@ class Handler(BaseHTTPRequestHandler):
                 break
 
     def _route_get(self, path: str, params: dict) -> None:
+        # Serve static files from the workbench directory
+        if path in ("", "/", "/index.html"):
+            fpath = os.path.join(_THIS_DIR, "index.html")
+            if os.path.exists(fpath):
+                with open(fpath, "rb") as f:
+                    body = f.read()
+                self.send_response(200)
+                self._cors()
+                self.send_header("Content-Type", "text/html; charset=utf-8")
+                self.send_header("Cache-Control", "no-store")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+                return
+        if path == "/jira-detail.html":
+            fpath = os.path.join(_THIS_DIR, "jira-detail.html")
+            if os.path.exists(fpath):
+                with open(fpath, "rb") as f:
+                    body = f.read()
+                self.send_response(200)
+                self._cors()
+                self.send_header("Content-Type", "text/html; charset=utf-8")
+                self.send_header("Cache-Control", "no-store")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+                return
+
         # Global routes
         if path in ("/api/status", "/api"):
             return self._json(200, {"status": "ok", "projects": len(_registry)})
 
         if path == "/api/projects":
             return self._json(200, list_projects())
+
+        if path == "/api/llm-providers":
+            return self._json(200, _detect_llm_providers())
 
         # Project-scoped
         m = re.match(r'^/api/([a-z0-9\-]{1,32})(/.+)$', path)
@@ -337,17 +546,23 @@ class Handler(BaseHTTPRequestHandler):
             integ  = project.get("integrations") or {}
             github = integ.get("github") or {}
             return self._json(200, {
-                "project_id":   project["project_id"],
-                "display_name": project.get("display_name", ""),
-                "color":        project.get("color", ""),
-                "jira_host":    (integ.get("jira") or {}).get("host", ""),
-                "gh_host":      github.get("host", ""),
-                "gh_org":       github.get("org", ""),
-                "repos":        github.get("repos") or {},
-                "dsr_host":     (integ.get("dsr") or {}).get("host", ""),
-                "workspace_dir":project.get("workspace", {}).get("dir", ""),
-                "llm_provider": (project.get("llm") or {}).get("provider", ""),
-                "llm_model":    (project.get("llm") or {}).get("model", ""),
+                "project_id":       project["project_id"],
+                "display_name":     project.get("display_name", ""),
+                "color":            project.get("color", ""),
+                "jira_host":        (integ.get("jira") or {}).get("host", ""),
+                "jira_project_key": (integ.get("jira") or {}).get("project_key", ""),
+                "gh_host":          github.get("host", ""),
+                "gh_org":           github.get("org", ""),
+                "repos":            github.get("repos") or {},
+                "repo_dev":         (github.get("repos") or {}).get("dev", ""),
+                "repo_test":        (github.get("repos") or {}).get("test", ""),
+                "dsr_host":         (integ.get("dsr") or {}).get("host", ""),
+                "workspace_dir":    project.get("workspace", {}).get("dir", ""),
+                "data_dir":         project.get("workspace", {}).get("data_dir", ""),
+                "llm_provider":     (project.get("llm") or {}).get("provider", ""),
+                "llm_model":        (project.get("llm") or {}).get("model", ""),
+                "api_port":         (project.get("ports") or {}).get("api_port", 8081),
+                "server_port":      (project.get("ports") or {}).get("server_port", 1337),
             })
 
         # /worktrees (legacy compat)
@@ -389,7 +604,61 @@ class Handler(BaseHTTPRequestHandler):
 
         return self._json(404, {"error": "not found"})
 
+    def _route_put(self, path: str, params: dict) -> None:
+        m = re.match(r'^/api/([a-z0-9\-]{1,32})/config$', path)
+        if not m:
+            return self._json(404, {"error": "not found"})
+        pid   = m.group(1)
+        fpath = os.path.join(PROJECTS_DIR, f"{pid}.yaml")
+        if not os.path.exists(fpath):
+            return self._json(404, {"error": f"project {pid!r} not found"})
+        length = int(self.headers.get("Content-Length", 0))
+        try:
+            body = json.loads(self.rfile.read(length)) if length else {}
+        except json.JSONDecodeError:
+            return self._json(400, {"error": "invalid JSON body"})
+        body["project_id"] = pid  # lock pid to URL
+        cleaned, err = _validate_project_body(body)
+        if err:
+            return self._json(400, {"error": err})
+        with open(fpath, "w") as f:
+            yaml.dump(cleaned, f, default_flow_style=False, allow_unicode=True)
+        reload_registry()
+        return self._json(200, {"project_id": pid})
+
+    def _route_delete(self, path: str, params: dict) -> None:
+        m = re.match(r'^/api/([a-z0-9\-]{1,32})$', path)
+        if not m:
+            return self._json(404, {"error": "not found"})
+        pid   = m.group(1)
+        fpath = os.path.join(PROJECTS_DIR, f"{pid}.yaml")
+        if not os.path.exists(fpath):
+            return self._json(404, {"error": f"project {pid!r} not found"})
+        os.remove(fpath)
+        reload_registry()
+        return self._json(200, {"deleted": pid})
+
     def _route_post(self, path: str, params: dict) -> None:
+        # Create a new project
+        if path == "/api/projects":
+            length = int(self.headers.get("Content-Length", 0))
+            try:
+                body = json.loads(self.rfile.read(length)) if length else {}
+            except json.JSONDecodeError:
+                return self._json(400, {"error": "invalid JSON body"})
+            cleaned, err = _validate_project_body(body)
+            if err:
+                return self._json(400, {"error": err})
+            pid   = cleaned["project_id"]
+            fpath = os.path.join(PROJECTS_DIR, f"{pid}.yaml")
+            if os.path.exists(fpath):
+                return self._json(409, {"error": f"project {pid!r} already exists"})
+            os.makedirs(PROJECTS_DIR, exist_ok=True)
+            with open(fpath, "w") as f:
+                yaml.dump(cleaned, f, default_flow_style=False, allow_unicode=True)
+            reload_registry()
+            return self._json(201, {"project_id": pid})
+
         m = re.match(r'^/api/([a-z0-9\-]{1,32})/jobs$', path)
         if not m:
             return self._json(404, {"error": "not found"})
@@ -420,6 +689,14 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         parsed = urlparse(self.path)
         self._route_post(parsed.path.rstrip("/"), parse_qs(parsed.query))
+
+    def do_PUT(self):
+        parsed = urlparse(self.path)
+        self._route_put(parsed.path.rstrip("/"), parse_qs(parsed.query))
+
+    def do_DELETE(self):
+        parsed = urlparse(self.path)
+        self._route_delete(parsed.path.rstrip("/"), parse_qs(parsed.query))
 
     def log_message(self, fmt, *args):
         print(f"[{time.strftime('%H:%M:%S')}] {fmt % args}")

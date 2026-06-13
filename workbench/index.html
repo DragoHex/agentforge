@@ -30,21 +30,120 @@
        display:flex;min-height:100vh}
 
   /* ── Sidebar ── */
-  .sidebar{width:200px;min-width:200px;background:var(--white);border-right:1px solid var(--gray-300);
-           padding:var(--sp-4) 0;display:flex;flex-direction:column;position:sticky;top:0;
-           height:100vh;overflow-y:auto;flex-shrink:0}
-  .sidebar-logo{font:600 14px var(--font-sans);color:var(--slate);padding:var(--sp-2) var(--sp-4) var(--sp-4);
-                display:block;border-bottom:1px solid var(--gray-150);margin-bottom:var(--sp-3)}
+  .sidebar{width:216px;min-width:216px;background:var(--white);border-right:1px solid var(--gray-300);
+           display:flex;flex-direction:column;position:sticky;top:0;
+           height:100vh;flex-shrink:0;transition:width .2s ease,min-width .2s ease;overflow:hidden}
+  .sidebar.collapsed{width:48px;min-width:48px}
+  .sidebar-header{display:flex;align-items:center;justify-content:space-between;
+                  padding:var(--sp-3) var(--sp-3) var(--sp-3) var(--sp-4);
+                  border-bottom:1px solid var(--gray-150);flex-shrink:0}
+  .sidebar-logo{font:600 14px var(--font-sans);color:var(--slate);white-space:nowrap;overflow:hidden}
+  .btn-burger{width:28px;height:28px;border:none;background:transparent;color:var(--gray-500);
+              cursor:pointer;border-radius:var(--r-xs);display:flex;align-items:center;
+              justify-content:center;flex-shrink:0;transition:background .12s,color .12s;padding:0}
+  .btn-burger:hover{background:var(--gray-150);color:var(--slate)}
+  .btn-burger .icon-burger{display:none}
+  .btn-burger .icon-back{display:block}
+  .sidebar.collapsed .btn-burger .icon-burger{display:block}
+  .sidebar.collapsed .btn-burger .icon-back{display:none}
+  .sidebar.collapsed .sidebar-header{justify-content:center;padding:var(--sp-3)}
+  .sidebar.collapsed .sidebar-logo{display:none}
+  .sidebar-body{display:flex;flex-direction:column;flex:1;overflow-y:auto;overflow-x:hidden;
+                padding-top:var(--sp-3)}
+  .sidebar.collapsed .sidebar-body{display:none}
   .sidebar-label{font:500 10px var(--font-sans);color:var(--gray-500);padding:0 var(--sp-4) var(--sp-1);
                  text-transform:uppercase;letter-spacing:.06em}
   .project-list{list-style:none;padding:0;margin:0}
+  .project-item{position:relative}
   .project-item a{display:flex;align-items:center;gap:var(--sp-2);padding:7px var(--sp-4);
-                  font:430 13px var(--font-sans);color:var(--gray-700);text-decoration:none;
-                  transition:background .12s,color .12s}
+                  padding-right:var(--sp-7);font:430 13px var(--font-sans);color:var(--gray-700);
+                  text-decoration:none;transition:background .12s,color .12s}
   .project-item a:hover{background:var(--gray-150);color:var(--slate)}
   .project-item.active a{background:rgba(217,119,87,.08);color:var(--clay);font-weight:500}
   .project-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
   .sidebar-loading{font:12px var(--font-sans);color:var(--gray-500);padding:var(--sp-2) var(--sp-4)}
+  /* 3-dot menu button per project */
+  .btn-proj-menu{position:absolute;right:6px;top:50%;transform:translateY(-50%);
+                 width:22px;height:22px;border:none;background:transparent;color:var(--gray-500);
+                 cursor:pointer;border-radius:var(--r-xs);font-size:17px;line-height:1;
+                 display:flex;align-items:center;justify-content:center;
+                 opacity:0;pointer-events:none;transition:background .1s,opacity .1s;padding:0}
+  .project-item:hover .btn-proj-menu,
+  .project-item:focus-within .btn-proj-menu{opacity:1;pointer-events:auto}
+  .btn-proj-menu:hover{background:var(--oat);color:var(--slate)}
+  .proj-dropdown{position:absolute;right:4px;top:calc(100% - 4px);z-index:200;
+                 background:var(--white);border:1px solid var(--gray-300);
+                 border-radius:var(--r-sm);box-shadow:var(--shadow-md);
+                 min-width:110px;display:none}
+  .proj-dropdown.open{display:block}
+  .proj-dropdown button{display:block;width:100%;text-align:left;padding:7px var(--sp-3);
+                        font:430 13px var(--font-sans);color:var(--gray-700);background:transparent;
+                        border:none;cursor:pointer;transition:background .1s}
+  .proj-dropdown button:hover{background:var(--gray-150)}
+  .proj-dropdown .dd-danger{color:var(--danger)}
+  .proj-dropdown .dd-danger:hover{background:#FDE8E8}
+  /* sidebar footer */
+  .sidebar-footer{padding:var(--sp-3) var(--sp-4);border-top:1px solid var(--gray-150);flex-shrink:0}
+  /* sidebar theme toggle section */
+  .sidebar-theme-section{padding:var(--sp-3) var(--sp-4);border-top:1px solid var(--gray-150);flex-shrink:0;
+                         display:flex;align-items:center;justify-content:flex-start;margin-top:auto}
+  .btn-add-project{width:100%;padding:6px 0;font:500 12px var(--font-sans);color:var(--gray-500);
+                   background:transparent;border:1px dashed var(--gray-300);border-radius:var(--r-sm);
+                   cursor:pointer;transition:background .12s,color .12s,border-color .12s}
+  .btn-add-project:hover{background:var(--gray-150);color:var(--slate);border-color:var(--gray-500)}
+  /* ── Modal ── */
+  .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:300}
+  .modal{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:310;
+         background:var(--white);border-radius:var(--r-lg);box-shadow:var(--shadow-md);
+         width:min(560px,96vw);max-height:90vh;display:flex;flex-direction:column;overflow:hidden}
+  .modal--sm{width:min(400px,94vw)}
+  .modal-header{display:flex;align-items:center;justify-content:space-between;
+                padding:var(--sp-4) var(--sp-5);border-bottom:1px solid var(--gray-150);flex-shrink:0}
+  .modal-title{font:500 16px var(--font-sans);color:var(--slate)}
+  .modal-close{width:28px;height:28px;border:none;background:transparent;color:var(--gray-500);
+               cursor:pointer;font-size:18px;border-radius:var(--r-xs);
+               display:flex;align-items:center;justify-content:center;line-height:1;padding:0}
+  .modal-close:hover{background:var(--gray-150);color:var(--slate)}
+  .modal-body{padding:var(--sp-4) var(--sp-5);overflow-y:auto;flex:1}
+  .modal-body p{font:430 14px/1.55 var(--font-sans);color:var(--slate)}
+  .modal-footer{display:flex;justify-content:flex-end;gap:var(--sp-2);
+                padding:var(--sp-3) var(--sp-5);border-top:1px solid var(--gray-150);flex-shrink:0}
+  /* form elements */
+  .form-group{margin-bottom:var(--sp-3)}
+  .form-row{display:flex;gap:var(--sp-3)}
+  .form-row .form-group{flex:1}
+  .form-label{display:block;font:500 11px var(--font-sans);color:var(--gray-700);
+              margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em}
+  .form-input{width:100%;padding:7px var(--sp-3);font:430 13px var(--font-sans);color:var(--slate);
+              background:var(--ivory);border:1px solid var(--gray-300);border-radius:var(--r-sm);
+              outline:none;transition:border-color .12s}
+  .form-input:focus{border-color:var(--clay);background:var(--white)}
+  .form-input:disabled{opacity:.55;cursor:not-allowed}
+  select.form-input{appearance:none;-webkit-appearance:none;cursor:pointer;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23888'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:right 10px center;padding-right:28px}
+  select.form-input:disabled{opacity:.55;cursor:not-allowed}
+  .form-hint-inline{font:11px var(--font-sans);color:var(--gray-400);margin-left:4px}
+  .form-color{width:44px;height:32px;padding:2px;border:1px solid var(--gray-300);
+              border-radius:var(--r-sm);cursor:pointer;background:none}
+  .form-hint{font:11px var(--font-sans);color:var(--gray-500);margin-top:3px;display:block}
+  .form-section{font:600 11px var(--font-sans);color:var(--gray-500);text-transform:uppercase;
+                letter-spacing:.06em;padding:var(--sp-3) 0 var(--sp-2);
+                border-bottom:1px solid var(--gray-150);margin-bottom:var(--sp-2)}
+  .form-error{background:#FDE8E8;border:1px solid #F0C0C0;border-radius:var(--r-sm);
+              color:var(--danger);font-size:12px;padding:var(--sp-2) var(--sp-3);margin-top:var(--sp-3)}
+  /* modal buttons */
+  .btn-cancel{padding:7px 18px;font:500 13px var(--font-sans);border:1px solid var(--gray-300);
+              border-radius:var(--r-sm);background:var(--white);color:var(--gray-700);
+              cursor:pointer;transition:background .12s}
+  .btn-cancel:hover{background:var(--gray-150)}
+  .btn-save{padding:7px 18px;font:500 13px var(--font-sans);border:none;border-radius:var(--r-sm);
+            background:var(--clay);color:#fff;cursor:pointer;transition:background .12s,opacity .12s}
+  .btn-save:hover{background:#c86744}
+  .btn-save:disabled{opacity:.5;pointer-events:none}
+  .btn-danger{padding:7px 18px;font:500 13px var(--font-sans);border:none;border-radius:var(--r-sm);
+              background:var(--danger);color:#fff;cursor:pointer;transition:background .12s}
+  .btn-danger:hover{background:#943c3c}
 
   /* ── Main content area ── */
   .main-content{flex:1;max-width:1200px;padding:var(--sp-6) var(--sp-5);min-width:0}
@@ -290,11 +389,33 @@
 <body>
 
 <nav id="project-sidebar" class="sidebar" aria-label="Projects">
-  <span class="sidebar-logo">Workbench</span>
-  <div class="sidebar-label">Projects</div>
-  <ul id="project-list" class="project-list">
-    <li class="sidebar-loading">Loading…</li>
-  </ul>
+  <div class="sidebar-header">
+    <span class="sidebar-logo">Workbench</span>
+    <button class="btn-burger" id="btn-burger" onclick="toggleSidebar()"
+            title="Toggle sidebar" aria-label="Toggle sidebar">
+      <svg class="icon-burger" width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <line x1="2" y1="4"  x2="14" y2="4"  stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        <line x1="2" y1="8"  x2="14" y2="8"  stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        <line x1="2" y1="12" x2="14" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+      <svg class="icon-back" width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <polyline points="9,3 3,8 9,13" stroke="currentColor" stroke-width="1.5"
+                  stroke-linejoin="round" stroke-linecap="round"/>
+      </svg>
+    </button>
+  </div>
+  <div class="sidebar-body">
+    <div class="sidebar-label">Projects</div>
+    <ul id="project-list" class="project-list">
+      <li class="sidebar-loading">Loading…</li>
+    </ul>
+    <div class="sidebar-footer">
+      <button class="btn-add-project" onclick="openProjectModal(null)">+ Add Project</button>
+    </div>
+    <div class="sidebar-theme-section">
+      <button class="btn-theme" id="btn-theme" onclick="toggleTheme()" title="Toggle dark mode">☀</button>
+    </div>
+  </div>
 </nav>
 
 <div class="main-content">
@@ -309,7 +430,6 @@
   <div class="header-right">
     <span id="refresh-status" style="font-size:12px;color:var(--gray-500)"></span>
     <button class="btn-refresh" id="btn-refresh" onclick="refreshData()">↻ Refresh</button>
-    <button class="btn-theme" id="btn-theme" onclick="toggleTheme()" title="Toggle dark mode">☀</button>
   </div>
 </div>
 
@@ -393,6 +513,126 @@
   </div>
 </div>
 
+<!-- ── Project Edit / Create Modal ─────────────────────────────────────── -->
+<div id="proj-modal-backdrop" class="modal-backdrop" onclick="closeProjectModal()" style="display:none" aria-hidden="true"></div>
+<div id="proj-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="proj-modal-title" style="display:none">
+  <div class="modal-header">
+    <h2 class="modal-title" id="proj-modal-title">Edit Project</h2>
+    <button class="modal-close" onclick="closeProjectModal()" aria-label="Close">✕</button>
+  </div>
+  <div class="modal-body">
+    <input type="hidden" id="pm-pid-orig">
+    <div class="form-group">
+      <label class="form-label" for="pm-pid">Project ID</label>
+      <input class="form-input" id="pm-pid" type="text" placeholder="my-project" autocomplete="off">
+      <span class="form-hint">Lowercase letters, digits, hyphens — max 32 chars. Immutable after creation.</span>
+    </div>
+    <div class="form-row">
+      <div class="form-group" style="flex:1">
+        <label class="form-label" for="pm-display">Display Name</label>
+        <input class="form-input" id="pm-display" type="text" placeholder="My Project">
+      </div>
+      <div class="form-group" style="flex:0 0 auto">
+        <label class="form-label" for="pm-color">Color</label>
+        <input class="form-color" id="pm-color" type="color" value="#D97757">
+      </div>
+    </div>
+    <div class="form-section">Workspace</div>
+    <div class="form-group">
+      <label class="form-label" for="pm-workspace-dir">Workspace Dir</label>
+      <input class="form-input" id="pm-workspace-dir" type="text" placeholder="~/workspace">
+    </div>
+    <div class="form-section">Jira</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label" for="pm-jira-host">Host</label>
+        <input class="form-input" id="pm-jira-host" type="text" placeholder="https://jira.example.com">
+      </div>
+      <div class="form-group" style="flex:0 0 120px">
+        <label class="form-label" for="pm-jira-key">Project Key</label>
+        <input class="form-input" id="pm-jira-key" type="text" placeholder="AV">
+      </div>
+    </div>
+    <div class="form-section">GitHub</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label" for="pm-gh-host">Host</label>
+        <input class="form-input" id="pm-gh-host" type="text" placeholder="github.example.com">
+      </div>
+      <div class="form-group" style="flex:0 0 140px">
+        <label class="form-label" for="pm-gh-org">Org</label>
+        <input class="form-input" id="pm-gh-org" type="text" placeholder="my-org">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label" for="pm-repo-dev">Dev Repo</label>
+        <input class="form-input" id="pm-repo-dev" type="text">
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="pm-repo-test">Test Repo</label>
+        <input class="form-input" id="pm-repo-test" type="text">
+      </div>
+    </div>
+    <div class="form-section">DSR</div>
+    <div class="form-group">
+      <label class="form-label" for="pm-dsr-host">Host</label>
+      <input class="form-input" id="pm-dsr-host" type="text" placeholder="https://dsr.example.com">
+    </div>
+    <div class="form-section">LLM</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label" for="pm-llm-provider">Provider</label>
+        <select class="form-input" id="pm-llm-provider" onchange="onLlmProviderChange()">
+          <option value="">Detecting…</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="pm-llm-model">Model</label>
+        <select class="form-input" id="pm-llm-model" onchange="onLlmModelChange()">
+          <option value="">— select provider first —</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group" id="pm-llm-model-custom-row" style="display:none">
+      <label class="form-label" for="pm-llm-model-custom">Model name</label>
+      <input class="form-input" id="pm-llm-model-custom" type="text" placeholder="enter exact model name">
+      <span class="form-hint">Not in the list above? Type the model ID directly.</span>
+    </div>
+    <div class="form-section">Ports</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label" for="pm-api-port">API Port</label>
+        <input class="form-input" id="pm-api-port" type="number" min="1024" max="65535" value="8081">
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="pm-server-port">Server Port</label>
+        <input class="form-input" id="pm-server-port" type="number" min="1024" max="65535" value="1337">
+      </div>
+    </div>
+    <div id="pm-error" class="form-error" style="display:none"></div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn-cancel" onclick="closeProjectModal()">Cancel</button>
+    <button class="btn-save" id="pm-save-btn" onclick="saveProjectModal()">Save</button>
+  </div>
+</div>
+
+<!-- ── Delete Confirm Dialog ─────────────────────────────────────────────── -->
+<div id="confirm-backdrop" class="modal-backdrop" onclick="closeConfirm()" style="display:none" aria-hidden="true"></div>
+<div id="confirm-dialog" class="modal modal--sm" role="dialog" aria-modal="true" style="display:none">
+  <div class="modal-header">
+    <h2 class="modal-title">Delete Project</h2>
+  </div>
+  <div class="modal-body">
+    <p id="confirm-msg"></p>
+  </div>
+  <div class="modal-footer">
+    <button class="btn-cancel" onclick="closeConfirm()">Cancel</button>
+    <button class="btn-danger" id="confirm-ok-btn">Delete</button>
+  </div>
+</div>
+
 <script>
 // ── Project context ────────────────────────────────────────────────────────
 const API_BASE = '/api';
@@ -408,11 +648,32 @@ function getCurrentProjectId() {
 
 let _projectId = getCurrentProjectId();
 
+// Keep the URL in sync so browser back-button from jira-detail returns to the
+// correct project even when BFCache is not used.
+(function syncProjectUrl() {
+  if (window.location.pathname.match(/\/workbench\/([a-z0-9\-]+)/)) return; // path-based
+  if (new URLSearchParams(window.location.search).has('project')) return;   // already set
+  history.replaceState(null, '', '?project=' + encodeURIComponent(_projectId));
+})();
+
 function dataUrl(resource) {
   return `${API_BASE}/${_projectId}/data/${resource}`;
 }
 
-// ── Sidebar ────────────────────────────────────────────────────────────────
+// ── Sidebar collapse ────────────────────────────────────────────────────────
+function initSidebarCollapse() {
+  if (localStorage.getItem('wb-sidebar-collapsed') === '1') {
+    document.getElementById('project-sidebar').classList.add('collapsed');
+  }
+}
+
+function toggleSidebar() {
+  const sb = document.getElementById('project-sidebar');
+  const collapsed = sb.classList.toggle('collapsed');
+  localStorage.setItem('wb-sidebar-collapsed', collapsed ? '1' : '0');
+}
+
+// ── Sidebar project list ────────────────────────────────────────────────────
 async function initSidebar() {
   try {
     const r = await fetch(`${API_BASE}/projects`, { cache: 'no-store' });
@@ -420,12 +681,20 @@ async function initSidebar() {
     const projects = await r.json();
     const list = document.getElementById('project-list');
     list.innerHTML = projects.map(p => `
-      <li class="project-item${p.id === _projectId ? ' active' : ''}">
+      <li class="project-item${p.id === _projectId ? ' active' : ''}" data-pid="${escHtml(p.id)}">
         <a href="?project=${encodeURIComponent(p.id)}"
            onclick="return switchProject(event,'${escHtml(p.id)}')">
           <span class="project-dot" style="background:${escHtml(p.color)}"></span>
           <span>${escHtml(p.display_name)}</span>
         </a>
+        <button class="btn-proj-menu" title="Project options"
+                onclick="toggleProjMenu(event,'${escHtml(p.id)}')"
+                aria-haspopup="true">⋯</button>
+        <div class="proj-dropdown" id="dd-${escHtml(p.id)}">
+          <button onclick="openProjectModal('${escHtml(p.id)}')">Edit</button>
+          <button onclick="renameProject('${escHtml(p.id)}')">Rename</button>
+          <button class="dd-danger" onclick="confirmDeleteProject('${escHtml(p.id)}')">Delete</button>
+        </div>
       </li>`).join('');
   } catch (_) {
     document.getElementById('project-list').innerHTML =
@@ -437,12 +706,321 @@ function switchProject(e, pid) {
   e.preventDefault();
   _projectId = pid;
   localStorage.setItem('wb-active-project', pid);
+  history.replaceState(null, '', '?project=' + encodeURIComponent(pid));
   document.querySelectorAll('.project-item').forEach(li =>
-    li.classList.toggle('active', li.querySelector('a[onclick]')?.getAttribute('onclick')?.includes(`'${pid}'`))
+    li.classList.toggle('active', li.dataset.pid === pid)
   );
   loadAll(true);
   return false;
 }
+
+// ── Project dropdown menu ───────────────────────────────────────────────────
+function toggleProjMenu(e, pid) {
+  e.preventDefault();
+  e.stopPropagation();
+  const dd = document.getElementById(`dd-${pid}`);
+  const wasOpen = dd && dd.classList.contains('open');
+  // Close all
+  document.querySelectorAll('.proj-dropdown.open').forEach(d => d.classList.remove('open'));
+  if (!wasOpen && dd) dd.classList.add('open');
+}
+
+document.addEventListener('click', () => {
+  document.querySelectorAll('.proj-dropdown.open').forEach(d => d.classList.remove('open'));
+});
+
+// ── LLM provider detection ──────────────────────────────────────────────────
+let _llmProviders = null; // cached after first fetch
+
+async function _loadLlmProviders() {
+  if (_llmProviders) return _llmProviders;
+  try {
+    const r = await fetch(`${API_BASE}/llm-providers`, { cache: 'no-store' });
+    _llmProviders = r.ok ? await r.json() : [];
+  } catch { _llmProviders = []; }
+  return _llmProviders;
+}
+
+function _populateProviderSelect(providers, savedProvider) {
+  const sel = document.getElementById('pm-llm-provider');
+  sel.innerHTML = '';
+  if (!providers.length) {
+    sel.innerHTML = '<option value="">No providers detected</option>';
+    return;
+  }
+  // Blank "none" option only when no saved value
+  if (!savedProvider) sel.innerHTML = '<option value="">— select —</option>';
+  providers.forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p.id;
+    opt.textContent = p.name;
+    if (p.id === savedProvider) opt.selected = true;
+    sel.appendChild(opt);
+  });
+  // Fallback: saved provider not in list → add it
+  if (savedProvider && !providers.find(p => p.id === savedProvider)) {
+    const opt = document.createElement('option');
+    opt.value = savedProvider;
+    opt.textContent = savedProvider + ' (custom)';
+    opt.selected = true;
+    sel.appendChild(opt);
+  }
+}
+
+function _populateModelSelect(models, savedModel) {
+  const sel   = document.getElementById('pm-llm-model');
+  const cRow  = document.getElementById('pm-llm-model-custom-row');
+  const cIn   = document.getElementById('pm-llm-model-custom');
+  sel.innerHTML = '';
+  if (!models.length) {
+    // No known models (e.g. LM Studio) — show only the custom field
+    sel.innerHTML = '<option value="__custom__">Enter manually…</option>';
+    cRow.style.display = '';
+    cIn.value = savedModel || '';
+    return;
+  }
+  if (!savedModel) sel.innerHTML = '<option value="">— select —</option>';
+  models.forEach(m => {
+    const opt = document.createElement('option');
+    opt.value = m;
+    opt.textContent = m;
+    if (m === savedModel) opt.selected = true;
+    sel.appendChild(opt);
+  });
+  const opt = document.createElement('option');
+  opt.value = '__custom__';
+  opt.textContent = 'Other…';
+  if (savedModel && !models.includes(savedModel)) opt.selected = true;
+  sel.appendChild(opt);
+  // If saved model isn't in list, show custom input pre-filled
+  if (savedModel && !models.includes(savedModel)) {
+    cRow.style.display = '';
+    cIn.value = savedModel;
+  } else {
+    cRow.style.display = 'none';
+    cIn.value = '';
+  }
+}
+
+function onLlmProviderChange() {
+  const pid = document.getElementById('pm-llm-provider').value;
+  if (!pid || !_llmProviders) {
+    document.getElementById('pm-llm-model').innerHTML = '<option value="">— select provider first —</option>';
+    document.getElementById('pm-llm-model-custom-row').style.display = 'none';
+    return;
+  }
+  const provider = _llmProviders.find(p => p.id === pid);
+  _populateModelSelect(provider ? provider.models : [], '');
+}
+
+function onLlmModelChange() {
+  const sel  = document.getElementById('pm-llm-model');
+  const cRow = document.getElementById('pm-llm-model-custom-row');
+  const cIn  = document.getElementById('pm-llm-model-custom');
+  if (sel.value === '__custom__') {
+    cRow.style.display = '';
+    cIn.focus();
+  } else {
+    cRow.style.display = 'none';
+    cIn.value = '';
+  }
+}
+
+// ── Project modal (create / edit) ───────────────────────────────────────────
+async function openProjectModal(pid) {
+  document.querySelectorAll('.proj-dropdown.open').forEach(d => d.classList.remove('open'));
+  const isCreate = !pid;
+  document.getElementById('proj-modal-title').textContent = isCreate ? 'Add Project' : 'Edit Project';
+  document.getElementById('pm-pid-orig').value = pid || '';
+  document.getElementById('pm-pid').disabled = !isCreate;
+  document.getElementById('pm-error').style.display = 'none';
+  document.getElementById('pm-save-btn').disabled = false;
+
+  // Reset text fields
+  ['pm-pid','pm-display','pm-workspace-dir','pm-jira-host','pm-jira-key',
+   'pm-gh-host','pm-gh-org','pm-repo-dev','pm-repo-test','pm-dsr-host'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  document.getElementById('pm-color').value = '#D97757';
+  document.getElementById('pm-api-port').value = '8081';
+  document.getElementById('pm-server-port').value = '1337';
+
+  // Show modal first so user sees it immediately while providers load
+  document.getElementById('proj-modal-backdrop').style.display = '';
+  document.getElementById('proj-modal').style.display = '';
+  setTimeout(() => {
+    const first = document.getElementById(isCreate ? 'pm-pid' : 'pm-display');
+    if (first) first.focus();
+  }, 50);
+
+  // Load providers (cached after first call) then fill selects
+  const [providers, cfg] = await Promise.all([
+    _loadLlmProviders(),
+    isCreate ? Promise.resolve(null) : fetch(`${API_BASE}/${pid}/config`, { cache: 'no-store' })
+      .then(r => r.ok ? r.json() : Promise.reject(new Error('Failed to load config')))
+      .catch(err => { _pmShowError(err.message); return null; }),
+  ]);
+
+  const savedProvider = cfg ? (cfg.llm_provider || '') : '';
+  const savedModel    = cfg ? (cfg.llm_model    || '') : '';
+  _populateProviderSelect(providers, savedProvider);
+  const selProvider = document.getElementById('pm-llm-provider').value;
+  const providerObj = providers.find(p => p.id === selProvider);
+  _populateModelSelect(providerObj ? providerObj.models : [], savedModel);
+
+  if (cfg) {
+    document.getElementById('pm-pid').value            = cfg.project_id       || '';
+    document.getElementById('pm-display').value        = cfg.display_name     || '';
+    document.getElementById('pm-color').value          = cfg.color            || '#888888';
+    document.getElementById('pm-workspace-dir').value  = cfg.workspace_dir    || '';
+    document.getElementById('pm-jira-host').value      = cfg.jira_host        || '';
+    document.getElementById('pm-jira-key').value       = cfg.jira_project_key || '';
+    document.getElementById('pm-gh-host').value        = cfg.gh_host          || '';
+    document.getElementById('pm-gh-org').value         = cfg.gh_org           || '';
+    document.getElementById('pm-repo-dev').value       = cfg.repo_dev         || '';
+    document.getElementById('pm-repo-test').value      = cfg.repo_test        || '';
+    document.getElementById('pm-dsr-host').value       = cfg.dsr_host         || '';
+    document.getElementById('pm-api-port').value       = cfg.api_port         || '8081';
+    document.getElementById('pm-server-port').value    = cfg.server_port      || '1337';
+  }
+}
+
+function closeProjectModal() {
+  document.getElementById('proj-modal-backdrop').style.display = 'none';
+  document.getElementById('proj-modal').style.display = 'none';
+}
+
+function _pmShowError(msg) {
+  const el = document.getElementById('pm-error');
+  el.textContent = msg;
+  el.style.display = '';
+}
+
+async function saveProjectModal() {
+  const pidOrig  = document.getElementById('pm-pid-orig').value;
+  const isCreate = !pidOrig;
+  document.getElementById('pm-error').style.display = 'none';
+  document.getElementById('pm-save-btn').disabled = true;
+
+  const body = {
+    project_id:       document.getElementById('pm-pid').value.trim(),
+    display_name:     document.getElementById('pm-display').value.trim(),
+    color:            document.getElementById('pm-color').value,
+    workspace_dir:    document.getElementById('pm-workspace-dir').value.trim(),
+    jira_host:        document.getElementById('pm-jira-host').value.trim(),
+    jira_project_key: document.getElementById('pm-jira-key').value.trim(),
+    gh_host:          document.getElementById('pm-gh-host').value.trim(),
+    gh_org:           document.getElementById('pm-gh-org').value.trim(),
+    repo_dev:         document.getElementById('pm-repo-dev').value.trim(),
+    repo_test:        document.getElementById('pm-repo-test').value.trim(),
+    dsr_host:         document.getElementById('pm-dsr-host').value.trim(),
+    llm_provider:     document.getElementById('pm-llm-provider').value.trim(),
+    llm_model:        (() => {
+      const sel = document.getElementById('pm-llm-model').value;
+      return (sel === '__custom__' || !sel)
+        ? document.getElementById('pm-llm-model-custom').value.trim()
+        : sel;
+    })(),
+    api_port:         document.getElementById('pm-api-port').value,
+    server_port:      document.getElementById('pm-server-port').value,
+  };
+
+  if (!/^[a-z0-9\-]{1,32}$/.test(body.project_id)) {
+    _pmShowError('Project ID must be lowercase letters, digits, hyphens — max 32 chars.');
+    document.getElementById('pm-save-btn').disabled = false;
+    return;
+  }
+  if (!body.display_name) {
+    _pmShowError('Display name is required.');
+    document.getElementById('pm-save-btn').disabled = false;
+    return;
+  }
+
+  try {
+    const url    = isCreate ? `${API_BASE}/projects` : `${API_BASE}/${pidOrig}/config`;
+    const method = isCreate ? 'POST' : 'PUT';
+    const r = await fetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    const data = await r.json();
+    if (!r.ok) {
+      _pmShowError(data.error || 'Save failed');
+      document.getElementById('pm-save-btn').disabled = false;
+      return;
+    }
+    closeProjectModal();
+    await initSidebar();
+    if (!isCreate && pidOrig === _projectId) loadAll(true);
+  } catch (err) {
+    _pmShowError(err.message);
+    document.getElementById('pm-save-btn').disabled = false;
+  }
+}
+
+function renameProject(pid) {
+  // Reuse the full edit modal; display_name field gets focus
+  openProjectModal(pid);
+}
+
+// ── Delete confirmation ─────────────────────────────────────────────────────
+let _pendingDeletePid = null;
+
+function confirmDeleteProject(pid) {
+  document.querySelectorAll('.proj-dropdown.open').forEach(d => d.classList.remove('open'));
+  _pendingDeletePid = pid;
+  document.getElementById('confirm-msg').textContent =
+    `Delete project "${pid}"? This removes the YAML config file and cannot be undone.`;
+  document.getElementById('confirm-backdrop').style.display = '';
+  document.getElementById('confirm-dialog').style.display = '';
+  document.getElementById('confirm-ok-btn').onclick = executeDeleteProject;
+  setTimeout(() => document.getElementById('confirm-ok-btn').focus(), 50);
+}
+
+function closeConfirm() {
+  document.getElementById('confirm-backdrop').style.display = 'none';
+  document.getElementById('confirm-dialog').style.display = 'none';
+  _pendingDeletePid = null;
+}
+
+async function executeDeleteProject() {
+  if (!_pendingDeletePid) return;
+  const pid = _pendingDeletePid;
+  closeConfirm();
+  try {
+    const r = await fetch(`${API_BASE}/${pid}`, { method: 'DELETE' });
+    if (!r.ok) {
+      const data = await r.json().catch(() => ({}));
+      alert(`Delete failed: ${data.error || r.status}`);
+      return;
+    }
+    // If we deleted the active project, switch to first remaining
+    if (pid === _projectId) {
+      const r2 = await fetch(`${API_BASE}/projects`, { cache: 'no-store' });
+      if (r2.ok) {
+        const projects = await r2.json();
+        if (projects.length) {
+          _projectId = projects[0].id;
+          localStorage.setItem('wb-active-project', _projectId);
+          loadAll(true);
+        }
+      }
+    }
+    await initSidebar();
+  } catch (err) {
+    alert(`Delete error: ${err.message}`);
+  }
+}
+
+// Close modals on Escape
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  closeProjectModal();
+  closeConfirm();
+  document.querySelectorAll('.proj-dropdown.open').forEach(d => d.classList.remove('open'));
+});
 
 // ── Config ─────────────────────────────────────────────────────────────────
 window.WB_CONFIG = {};
@@ -503,7 +1081,7 @@ function renderWorktrees(data) {
   container.innerHTML = '<div class="worktree-grid">' +
     data.map(w => {
       const chips = (w.jira_ids || []).map(id =>
-        `<a class="jira-chip" href="jira-detail.html?id=${escHtml(id)}">${escHtml(id)}</a>`
+        `<a class="jira-chip" href="jira-detail.html?id=${escHtml(id)}&project=${encodeURIComponent(_projectId)}">${escHtml(id)}</a>`
       ).join('');
       const tdBadge = w.has_td_docs
         ? '<span class="td-docs-badge">td-docs</span>' : '';
@@ -529,7 +1107,7 @@ function renderWorktrees(data) {
 
 // ── Ticket card ────────────────────────────────────────────────────────────
 function renderTicketCard(ticket, clickable) {
-  const href = clickable ? `jira-detail.html?id=${escHtml(ticket.key)}` : null;
+  const href = clickable ? `jira-detail.html?id=${escHtml(ticket.key)}&project=${encodeURIComponent(_projectId)}` : null;
   const typeClass = typeBadgeClass(ticket.type);
   const updated = relativeTime(ticket.updated);
   const key = escHtml(ticket.key);
@@ -842,7 +1420,7 @@ function renderPRCard(pr) {
   const statusPills = renderStatusPills(pr);
 
   const jiraChips = (pr.jira_ids || []).map(id =>
-    `<a class="pr-jira-chip" href="jira-detail.html?id=${escHtml(id)}"
+    `<a class="pr-jira-chip" href="jira-detail.html?id=${escHtml(id)}&project=${encodeURIComponent(_projectId)}"
         onclick="event.stopPropagation()">${escHtml(id)}</a>`
   ).join('');
 
@@ -1044,6 +1622,7 @@ async function refreshData() {
   }
 }
 
+initSidebarCollapse();
 initSidebar().then(() => loadAll());
 </script>
 </div><!-- .main-content -->

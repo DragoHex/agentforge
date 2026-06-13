@@ -74,8 +74,8 @@ if cfg_format == "yaml":
         'DSR_HOST':            expand(dsr.get("host", "")),
         'WORKSPACE':           expand(ws.get("dir", "")),
         'TD_DOCS_BASE':        expand(ws.get("td_docs_base", "")),
-        'WORKBENCH_DIR':       expand(ws.get("data_dir", "")),
-        'WORKBENCH_DATA_DIR':  expand(ws.get("data_dir", "")),
+        'WORKBENCH_DIR':       expand(ws.get("data_dir") or f"~/.config/workbench/data/{doc.get('project_id', '')}"),
+        'WORKBENCH_DATA_DIR':  expand(ws.get("data_dir") or f"~/.config/workbench/data/{doc.get('project_id', '')}"),
         'SERVER_PORT':         str(ports.get("server_port", 1337)),
         'API_PORT':            str(ports.get("api_port", 8081)),
     }

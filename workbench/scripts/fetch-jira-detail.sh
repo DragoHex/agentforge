@@ -69,7 +69,7 @@ process_ticket() {
     # ── 1b. Create/link td-docs ───────────────────────────────────────────────
     # Canonical location : ~/.dev-work/td-docs/<worktree>/<jira_id>.md
     # Symlink location   : <worktree>/.cursor/td-docs/<jira_id>.md -> canonical
-    if [[ -n "$WORKTREE_PATH" ]]; then
+    if [[ -n "$WORKTREE_PATH" && -n "$TD_DOCS_BASE" ]]; then
         _canonical_dir="$TD_DOCS_BASE/$WORKTREE_NAME"
         _canonical="$_canonical_dir/${JIRA_ID}.md"
         _link_dir="$WORKTREE_PATH/.cursor/td-docs"
@@ -405,7 +405,7 @@ ids = [t['key'] for t in data.get('in_progress',[])] + [t['key'] for t in data.g
 print(' '.join(ids))
 ")
     for id in $IDS; do
-        process_ticket "$id"
+        process_ticket "$id" || echo "  WARNING: skipped $id (non-fatal)"
     done
 else
     [[ -n "${1:-}" ]] || { echo "Usage: $0 <AV-ID> [--worktree <name>] | --all"; exit 1; }
