@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JIRA Detail — Workbench</title>
+<script>(function(){var t=localStorage.getItem('wb-theme');if(t==='dark')document.documentElement.setAttribute('data-theme','dark');}());</script>
+<style>
+  :root {
+    --ivory:#FAF9F5; --slate:#141413; --clay:#D97757; --olive:#788C5D;
+    --oat:#E3DACC; --white:#FFFFFF; --gray-150:#F0EEE6; --gray-300:#D1CFC5;
+    --gray-500:#87867F; --gray-700:#3D3D3A; --danger:#B04A4A;
+    --warning:#C78E3F; --info:#5C7CA3;
+    --font-sans:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    --font-mono:ui-monospace,"SF Mono","Cascadia Code",Menlo,monospace;
+    --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px; --sp-5:24px;
+    --sp-6:32px; --sp-7:48px;
+    --r-xs:4px; --r-sm:8px; --r-md:12px; --r-lg:20px;
+    --shadow-sm:0 1px 2px rgba(0,0,0,.06); --shadow-md:0 4px 10px rgba(0,0,0,.08);
+  }
+  /* ── Dark mode overrides ── */
+  [data-theme="dark"] {
+    --ivory:#1C1C1A; --slate:#E6E4DE; --oat:#2A2A27; --white:#242421;
+    --gray-150:#2E2E2B; --gray-300:#3D3D3A; --gray-500:#8C8A83; --gray-700:#C2C0B8;
+    --shadow-sm:0 1px 3px rgba(0,0,0,.3); --shadow-md:0 4px 12px rgba(0,0,0,.4);
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{font:430 16px/1.55 var(--font-sans);color:var(--slate);background:var(--ivory);
+       max-width:1280px;margin:0 auto;padding:var(--sp-5) var(--sp-5);
+       -webkit-font-smoothing:antialiased;transition:background .2s,color .2s}
+
+  /* ── Top bar ── */
+  .topbar{display:flex;align-items:center;gap:var(--sp-3);margin-bottom:var(--sp-4);
+          padding-bottom:var(--sp-3);border-bottom:1px solid var(--gray-300);flex-wrap:wrap}
+  .topbar-left{display:flex;align-items:center;gap:var(--sp-3);flex:1;min-width:0}
+  .topbar-right{display:flex;align-items:center;gap:var(--sp-2);flex-shrink:0}
+  .back-link{font:500 13px var(--font-sans);color:var(--gray-500);text-decoration:none;
+             padding:4px 10px;border:1px solid var(--gray-300);border-radius:var(--r-sm);
+             background:var(--white);transition:background .15s;white-space:nowrap}
+  .back-link:hover{background:var(--gray-150);color:var(--slate)}
+  .topbar-id{font:500 18px var(--font-mono);color:var(--info);white-space:nowrap}
+  .topbar-summary{font:430 15px/1.4 var(--font-sans);color:var(--gray-700);
+                  min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .status-badge{display:inline-block;font:500 11px var(--font-sans);padding:3px 10px;
+                border-radius:var(--r-xs);text-transform:uppercase;letter-spacing:.04em;
+                white-space:nowrap}
+  .status-ip   {background:rgba(217,119,87,.15);color:#9B4E28}
+  .status-todo {background:var(--gray-150);color:var(--gray-700)}
+  .status-done {background:rgba(120,140,93,.15);color:#4A5E35}
+
+  /* ── Worktree selector ── */
+  .worktree-selector{display:flex;align-items:center;gap:var(--sp-2);
+                     padding:var(--sp-3) var(--sp-4);margin-bottom:var(--sp-4);
+                     background:var(--white);border:1px solid var(--gray-300);
+                     border-radius:var(--r-md);flex-wrap:wrap}
+  .wt-select-label{font:500 12px var(--font-sans);text-transform:uppercase;
+                   letter-spacing:.04em;color:var(--gray-500);white-space:nowrap}
+  .wt-select{font:430 13px var(--font-sans);padding:5px 10px;
+             border:1px solid var(--gray-300);border-radius:var(--r-sm);
+             background:var(--ivory);color:var(--slate);cursor:pointer;
+             min-width:180px;transition:border-color .15s}
+  .wt-select:focus{outline:none;border-color:var(--clay)}
+  .wt-select option{background:var(--ivory);color:var(--slate)}
+  .btn-fetch{display:inline-flex;align-items:center;gap:6px;
+             font:500 13px var(--font-sans);padding:5px 14px;
+             border:1px solid var(--clay);border-radius:var(--r-sm);
+             background:var(--clay);color:#fff;cursor:pointer;
+             transition:background .15s,opacity .15s;white-space:nowrap}
+  .btn-fetch:hover{background:#C06848}
+  .btn-fetch:disabled{opacity:.5;cursor:not-allowed}
+  .fetch-status{font:12px var(--font-sans);color:var(--gray-500)}
+  .fetch-status.running{color:var(--warning)}
+  .fetch-status.done   {color:var(--olive)}
+  .fetch-status.failed {color:var(--danger)}
+
+  /* ── Progress bar ── */
+  .progress-bar{height:3px;background:var(--gray-150);border-radius:2px;
+                overflow:hidden;margin-top:8px;width:100%}
+  .progress-fill{height:100%;background:var(--clay);border-radius:2px;
+                 width:0;transition:width .3s}
+  .progress-fill.indeterminate{width:40%;animation:slide 1.2s ease-in-out infinite}
+  @keyframes slide{0%{transform:translateX(-200%)}100%{transform:translateX(350%)}}
+
+  /* ── Theme toggle ── */
+  .btn-theme{width:34px;height:34px;border-radius:50%;border:1px solid var(--gray-300);
+             background:var(--white);cursor:pointer;font-size:15px;
+             display:flex;align-items:center;justify-content:center;
+             transition:background .15s,transform .2s}
+  .btn-theme:hover{background:var(--gray-150);transform:rotate(20deg)}
+
+  /* ── Ticket meta strip ── */
+  .ticket-meta{display:flex;flex-wrap:wrap;gap:var(--sp-4);margin-bottom:var(--sp-5);
+               padding:var(--sp-3) var(--sp-4);background:var(--white);
+               border:1px solid var(--gray-300);border-radius:var(--r-md)}
+  .meta-item{display:flex;flex-direction:column;gap:2px;min-width:100px}
+  .meta-label{font:500 11px var(--font-sans);text-transform:uppercase;
+              letter-spacing:.04em;color:var(--gray-500)}
+  .meta-value{font:430 13px var(--font-sans);color:var(--slate)}
+  .meta-value a{color:var(--clay);text-decoration:none}
+  .meta-value a:hover{text-decoration:underline}
+
+  /* ── Tab navigation ── */
+  .tab-nav{display:flex;gap:2px;margin-bottom:var(--sp-5);
+           border-bottom:2px solid var(--gray-300);padding-bottom:0}
+  .tab-btn{font:500 14px var(--font-sans);padding:var(--sp-2) var(--sp-4);
+           border:none;background:none;cursor:pointer;color:var(--gray-500);
+           border-bottom:3px solid transparent;margin-bottom:-2px;
+           transition:color .15s,border-color .15s;border-radius:var(--r-xs) var(--r-xs) 0 0}
+  .tab-btn:hover{color:var(--slate);background:var(--gray-150)}
+  .tab-btn.active{color:var(--clay);border-bottom-color:var(--clay);background:none}
+  .tab-panel{display:none}
+  .tab-panel.active{display:block}
+
+  /* ── Pane containers ── */
+  .pane-header{margin-bottom:var(--sp-4)}
+  .pane-title{font:500 20px/1.3 var(--font-sans);margin-bottom:var(--sp-2)}
+  .pane-desc{font:14px/1.6 var(--font-sans);color:var(--gray-700)}
+
+  /* ── Approaches grid ── */
+  .approaches-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+                   gap:var(--sp-4);margin-top:var(--sp-4)}
+  .approach-card{background:var(--white);border:1px solid var(--gray-300);
+                 border-radius:var(--r-md);overflow:hidden;box-shadow:var(--shadow-sm)}
+  .approach-card.recommended{border-color:var(--clay);border-width:2px}
+  .approach-header{padding:var(--sp-3) var(--sp-4);background:var(--gray-150);
+                   border-bottom:1px solid var(--gray-300);
+                   display:flex;align-items:center;justify-content:space-between}
+  .approach-header.recommended{background:rgba(217,119,87,.1)}
+  .approach-name{font:500 14px var(--font-sans)}
+  .rec-badge{font:500 10px var(--font-sans);background:var(--clay);color:var(--white);
+             padding:2px 8px;border-radius:var(--r-xs);text-transform:uppercase}
+  .approach-body{padding:var(--sp-4)}
+  .approach-body p{font:13px/1.55 var(--font-sans);color:var(--gray-700);
+                   margin-bottom:var(--sp-3)}
+  .pros-cons{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-3);margin-top:var(--sp-3)}
+  .pros-list,.cons-list{list-style:none;padding:0}
+  .pros-list li{font:12px/1.5 var(--font-sans);color:var(--olive);padding:2px 0;padding-left:16px;position:relative}
+  .pros-list li::before{content:'+';position:absolute;left:0;font-weight:700;color:var(--olive)}
+  .cons-list li{font:12px/1.5 var(--font-sans);color:var(--danger);padding:2px 0;padding-left:16px;position:relative}
+  .cons-list li::before{content:'−';position:absolute;left:0;font-weight:700;color:var(--danger)}
+  .pros-label,.cons-label{font:500 11px var(--font-sans);text-transform:uppercase;
+                           letter-spacing:.03em;margin-bottom:4px}
+  .pros-label{color:var(--olive)}
+  .cons-label{color:var(--danger)}
+
+  /* ── Markdown content ── */
+  .md-content{background:var(--white);border:1px solid var(--gray-300);
+              border-radius:var(--r-md);padding:var(--sp-5);line-height:1.7}
+  .md-content h1,.md-content h2,.md-content h3{color:var(--slate);margin:var(--sp-5) 0 var(--sp-3);
+                                                 padding-bottom:var(--sp-2);border-bottom:1px solid var(--gray-150)}
+  .md-content h1:first-child,.md-content h2:first-child,.md-content h3:first-child{margin-top:0}
+  .md-content p{margin-bottom:var(--sp-3);font-size:14px;color:var(--gray-700)}
+  .md-content ul,.md-content ol{margin-left:var(--sp-5);margin-bottom:var(--sp-3)}
+  .md-content li{font-size:14px;color:var(--gray-700);margin-bottom:4px}
+  .md-content code{font-family:var(--font-mono);font-size:12px;background:var(--gray-150);
+                   padding:1px 5px;border-radius:var(--r-xs);color:var(--slate)}
+  .md-content pre{background:var(--oat);border:1px solid var(--gray-300);border-radius:var(--r-sm);
+                  padding:var(--sp-4);overflow-x:auto;margin-bottom:var(--sp-4)}
+  .md-content pre code{background:none;padding:0;font-size:12px}
+  .md-content blockquote{border-left:3px solid var(--clay);padding-left:var(--sp-4);
+                          color:var(--gray-500);margin-bottom:var(--sp-3)}
+  .md-content table{width:100%;border-collapse:collapse;margin-bottom:var(--sp-4);font-size:13px}
+  .md-content th{text-align:left;font-weight:500;padding:8px 12px;
+                 border-bottom:2px solid var(--gray-300);color:var(--gray-500);
+                 text-transform:uppercase;font-size:11px;letter-spacing:.03em}
+  .md-content td{padding:8px 12px;border-bottom:1px solid var(--gray-150)}
+  .md-content strong{font-weight:600;color:var(--slate)}
+  .md-content em{font-style:italic}
+  .md-content hr{border:none;border-top:1px solid var(--gray-300);margin:var(--sp-5) 0}
+
+  /* ── PR annotations ── */
+  .pr-header{background:var(--white);border:1px solid var(--gray-300);border-radius:var(--r-md);
+             padding:var(--sp-4);margin-bottom:var(--sp-4);
+             display:flex;align-items:center;gap:var(--sp-4);flex-wrap:wrap}
+  .pr-number{font:500 16px var(--font-mono);color:var(--info)}
+  .pr-title-text{font:500 15px var(--font-sans);flex:1;min-width:0}
+  .pr-state-badge{font:500 11px var(--font-sans);padding:3px 10px;border-radius:var(--r-xs);
+                  text-transform:uppercase;letter-spacing:.04em}
+  .pr-state-open  {background:rgba(120,140,93,.15);color:#4A5E35}
+  .pr-state-closed{background:rgba(176,74,74,.12);color:var(--danger)}
+  .pr-state-merged{background:rgba(92,124,163,.12);color:var(--info)}
+  .pr-state-unknown{background:var(--gray-150);color:var(--gray-500)}
+
+  /* ── Status pane ── */
+  .status-grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-4)}
+  .status-card{background:var(--white);border:1px solid var(--gray-300);
+               border-radius:var(--r-md);overflow:hidden;box-shadow:var(--shadow-sm)}
+  .status-card-header{padding:var(--sp-3) var(--sp-4);background:var(--gray-150);
+                      border-bottom:1px solid var(--gray-300);
+                      font:500 13px var(--font-sans);text-transform:uppercase;
+                      letter-spacing:.04em;color:var(--gray-700)}
+  .status-card-body{padding:var(--sp-4)}
+  .dsr-run{padding:var(--sp-3);margin-bottom:var(--sp-2);
+           border:1px solid var(--gray-300);border-radius:var(--r-sm);
+           background:var(--ivory)}
+  .dsr-run:last-child{margin-bottom:0}
+  .dsr-run-header{display:flex;align-items:center;gap:var(--sp-2);flex-wrap:wrap;
+                  margin-bottom:var(--sp-2)}
+  .dsr-id{font:500 12px var(--font-mono);color:var(--gray-700)}
+  .dsr-branch{font:12px var(--font-mono);color:var(--gray-500)}
+  .dsr-time{font:12px var(--font-mono);color:var(--gray-500);margin-left:auto}
+  .dsr-jobs{margin-top:var(--sp-2)}
+  .dsr-job{display:flex;align-items:center;gap:var(--sp-2);padding:3px 0;font-size:12px}
+  .job-status{display:inline-block;width:8px;height:8px;border-radius:50%;flex-shrink:0}
+  .job-status.success {background:var(--olive)}
+  .job-status.failed  {background:var(--danger)}
+  .job-status.running {background:var(--warning);animation:pulse 1s infinite}
+  .job-status.aborted {background:var(--gray-500)}
+  .job-status.pending {background:var(--gray-300);border:1px solid var(--gray-500)}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+  .job-name{font:12px var(--font-mono);color:var(--gray-700)}
+  .job-comment{font:11px var(--font-sans);color:var(--gray-500);margin-left:auto}
+
+  .run-status-badge{display:inline-block;font:500 11px var(--font-sans);
+                    padding:2px 8px;border-radius:var(--r-xs);text-transform:uppercase;
+                    letter-spacing:.03em}
+  .run-SUCCESS {background:rgba(120,140,93,.15);color:#4A5E35}
+  .run-FAILED  {background:rgba(176,74,74,.12);color:var(--danger)}
+  .run-ABORTED {background:var(--gray-150);color:var(--gray-500)}
+  .run-RUNNING,.run-IN_PROGRESS{background:rgba(199,142,63,.15);color:#7A5020;
+                                animation:pulse 2s infinite}
+  .run-PENDING {background:var(--gray-150);color:var(--gray-700)}
+
+  /* ── No data placeholder ── */
+  .no-data{text-align:center;padding:var(--sp-7);color:var(--gray-500)}
+  .no-data svg{opacity:.3;margin-bottom:var(--sp-3)}
+  .no-data p{font-size:13px}
+  .no-data code{font-size:12px;background:var(--gray-150);padding:2px 6px;border-radius:var(--r-xs)}
+
+  .loading-state{text-align:center;padding:var(--sp-7);color:var(--gray-500)}
+  .error-state{background:#FDE8E8;border:1px solid #F0C0C0;border-radius:var(--r-sm);
+               padding:var(--sp-4);color:var(--danger);font-size:14px}
+
+  @media(max-width:768px){
+    .status-grid{grid-template-columns:1fr}
+    .approaches-grid{grid-template-columns:1fr}
+    .pros-cons{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <a class="back-link" href="/" onclick="event.preventDefault(); history.back()">← Back</a>
+    <span class="topbar-id" id="ticket-id">—</span>
+    <span class="topbar-summary" id="ticket-summary">Loading…</span>
+    <span class="status-badge" id="ticket-status"></span>
+  </div>
+  <div class="topbar-right">
+    <button class="btn-theme" id="btn-theme" onclick="toggleTheme()" title="Toggle dark mode">☀</button>
+  </div>
+</div>
+
+<!-- ── Worktree selector ── -->
+<div class="worktree-selector" id="worktree-selector">
+  <span class="wt-select-label">Worktree</span>
+  <select class="wt-select" id="wt-select" onchange="fetchWithWorktree()">
+    <option value="">— select worktree —</option>
+  </select>
+  <button class="btn-fetch" id="btn-fetch" onclick="fetchWithWorktree()" disabled>
+    ↻ Fetch Data
+  </button>
+  <span class="fetch-status" id="fetch-status"></span>
+  <div class="progress-bar" id="progress-bar" style="display:none">
+    <div class="progress-fill indeterminate" id="progress-fill"></div>
+  </div>
+</div>
+
+<div class="ticket-meta" id="ticket-meta"></div>
+
+<div class="tab-nav">
+  <button class="tab-btn active" data-tab="approaches">Code Approaches</button>
+  <button class="tab-btn" data-tab="impl-plan">Implementation Plan</button>
+  <button class="tab-btn" data-tab="pr-annot">PR Annotations</button>
+  <button class="tab-btn" data-tab="status">Status</button>
+</div>
+
+<!-- ── Pane 1: Code Approaches ── -->
+<div class="tab-panel active" id="panel-approaches">
+  <div class="pane-header">
+    <div class="pane-title">Code Approaches</div>
+    <div class="pane-desc">Three implementation approaches with trade-offs</div>
+  </div>
+  <div id="approaches-content">
+    <div class="loading-state">Loading…</div>
+  </div>
+</div>
+
+<!-- ── Pane 2: Implementation Plan ── -->
+<div class="tab-panel" id="panel-impl-plan">
+  <div class="pane-header">
+    <div class="pane-title">Implementation Plan</div>
+    <div class="pane-desc">Milestones, data flow, and risk table</div>
+  </div>
+  <div id="impl-plan-content">
+    <div class="loading-state">Loading…</div>
+  </div>
+</div>
+
+<!-- ── Pane 3: PR Annotations ── -->
+<div class="tab-panel" id="panel-pr-annot">
+  <div class="pane-header">
+    <div class="pane-title">PR Annotations</div>
+    <div class="pane-desc">Review notes and pull request writeup</div>
+  </div>
+  <div id="pr-annot-content">
+    <div class="loading-state">Loading…</div>
+  </div>
+</div>
+
+<!-- ── Pane 4: Status ── -->
+<div class="tab-panel" id="panel-status">
+  <div class="pane-header">
+    <div class="pane-title">Status</div>
+    <div class="pane-desc">PR status, DSR runs, and DFR runs</div>
+  </div>
+  <div id="status-content">
+    <div class="loading-state">Loading…</div>
+  </div>
+</div>
+
+<script>
+// ── Config ─────────────────────────────────────────────────────────────────
+window.WB_CONFIG = {};
+async function loadConfig() {
+  try {
+    const BASE = window.location.pathname.replace(/\/[^/]*$/, '');
+    const r = await fetch(BASE + '/config.json', { cache: 'no-store' });
+    if (r.ok) window.WB_CONFIG = await r.json();
+  } catch (_) { /* fall back to empty defaults */ }
+}
+
+// ── Tab switching ──────────────────────────────────────────────────────────
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const tab = btn.dataset.tab;
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('panel-' + tab).classList.add('active');
+  });
+});
+
+// ── Utilities ──────────────────────────────────────────────────────────────
+function escHtml(s) {
+  return String(s || '')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function relativeTime(dateStr) {
+  if (!dateStr) return '';
+  const diff = (Date.now() - new Date(dateStr)) / 1000;
+  if (diff < 60)    return 'just now';
+  if (diff < 3600)  return Math.floor(diff / 60) + 'm ago';
+  if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+  return Math.floor(diff / 86400) + 'd ago';
+}
+
+// Minimal Markdown → HTML renderer
+function renderMarkdown(md) {
+  if (!md) return '';
+  let html = escHtml(md);
+
+  // Code blocks first (protect from other transforms)
+  const codeBlocks = [];
+  html = html.replace(/```[\w]*\n?([\s\S]*?)```/g, (_, code) => {
+    const idx = codeBlocks.length;
+    codeBlocks.push(`<pre><code>${code}</code></pre>`);
+    return `\x00CODE${idx}\x00`;
+  });
+
+  // Inline code
+  html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+
+  // Headings
+  html = html.replace(/^#{3}\s+(.+)$/gm, '<h3>$1</h3>');
+  html = html.replace(/^#{2}\s+(.+)$/gm, '<h2>$1</h2>');
+  html = html.replace(/^#{1}\s+(.+)$/gm, '<h1>$1</h1>');
+
+  // Bold / italic
+  html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  html = html.replace(/\*([^*]+)\*/g,    '<em>$1</em>');
+
+  // Horizontal rule
+  html = html.replace(/^---+$/gm, '<hr>');
+
+  // Tables (simple)
+  html = html.replace(/((?:^[|].+\n)+)/gm, tableMatch => {
+    const rows = tableMatch.trim().split('\n');
+    if (rows.length < 2) return tableMatch;
+    const header = rows[0].split('|').filter(c => c.trim()).map(c => `<th>${c.trim()}</th>`).join('');
+    const bodyRows = rows.slice(2).map(r => {
+      const cells = r.split('|').filter(c => c.trim()).map(c => `<td>${c.trim()}</td>`).join('');
+      return `<tr>${cells}</tr>`;
+    }).join('');
+    return `<table><thead><tr>${header}</tr></thead><tbody>${bodyRows}</tbody></table>`;
+  });
+
+  // Unordered lists
+  html = html.replace(/((?:^[*\-] .+\n?)+)/gm, listMatch => {
+    const items = listMatch.trim().split('\n')
+      .map(line => `<li>${line.replace(/^[*\-]\s+/, '')}</li>`).join('');
+    return `<ul>${items}</ul>`;
+  });
+
+  // Ordered lists
+  html = html.replace(/((?:^\d+\. .+\n?)+)/gm, listMatch => {
+    const items = listMatch.trim().split('\n')
+      .map(line => `<li>${line.replace(/^\d+\.\s+/, '')}</li>`).join('');
+    return `<ol>${items}</ol>`;
+  });
+
+  // Blockquote
+  html = html.replace(/^&gt;\s*(.+)$/gm, '<blockquote>$1</blockquote>');
+
+  // Paragraphs: double newlines
+  html = html.replace(/\n\n+/g, '</p><p>');
+  html = '<p>' + html + '</p>';
+  html = html.replace(/<p>(<(?:h[1-6]|ul|ol|table|pre|hr|blockquote)[^>]*>)/g, '$1');
+  html = html.replace(/(<\/(?:h[1-6]|ul|ol|table|pre|hr|blockquote)>)<\/p>/g, '$1');
+  html = html.replace(/<p><\/p>/g, '');
+
+  // Single newlines → <br> (inside paragraphs only)
+  html = html.replace(/([^>])\n([^<])/g, '$1<br>$2');
+
+  // Restore code blocks
+  html = html.replace(/\x00CODE(\d+)\x00/g, (_, idx) => codeBlocks[parseInt(idx)]);
+
+  return html;
+}
+
+function noDataPlaceholder(section, ticket_id) {
+  return `
+    <div class="no-data">
+      <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="8" y="8" width="32" height="32" rx="4" stroke="currentColor" stroke-width="2" fill="none"/>
+        <line x1="16" y1="20" x2="32" y2="20" stroke="currentColor" stroke-width="2"/>
+        <line x1="16" y1="26" x2="26" y2="26" stroke="currentColor" stroke-width="2"/>
+      </svg>
+      <p>No <strong>${escHtml(section)}</strong> found for ${escHtml(ticket_id)}.</p>
+      <p>Create <code>.cursor/td-docs/${escHtml(ticket_id)}.md</code> in the assigned worktree,<br>
+         then run <code>scripts/fetch-jira-detail.sh ${escHtml(ticket_id)}</code>.</p>
+    </div>`;
+}
+
+// ── Status helpers ─────────────────────────────────────────────────────────
+function dsrStatusClass(status) {
+  const s = (status || '').toUpperCase();
+  if (s === 'SUCCESS') return 'run-SUCCESS';
+  if (s === 'FAILED')  return 'run-FAILED';
+  if (s === 'ABORTED') return 'run-ABORTED';
+  if (s === 'RUNNING' || s === 'IN_PROGRESS') return 'run-RUNNING';
+  return 'run-PENDING';
+}
+
+function jobDotClass(statusId) {
+  // DSR status_id: 1=pending, 2=running, 3=success, 4=failed, 5=aborted
+  const map = {1:'pending', 2:'running', 3:'success', 4:'failed', 5:'aborted'};
+  return map[statusId] || 'pending';
+}
+
+// ── Render functions ───────────────────────────────────────────────────────
+
+function renderApproaches(data) {
+  const container = document.getElementById('approaches-content');
+  const td = data.td_docs || {};
+  const jiraId = data.jira_id || '';
+
+  if (!td.exists || !td.approaches) {
+    container.innerHTML = noDataPlaceholder('Code Approaches', jiraId);
+    return;
+  }
+
+  const md = td.approaches;
+
+  // Try to detect structured approaches (### Approach N or ## Approach N)
+  const approachBlocks = [];
+  const matches = [...md.matchAll(/^###?\s+(?:Approach\s+)?(\d+|[A-Z][^:\n]*)[:\s]*(.*)\n([\s\S]*?)(?=\n###?\s+(?:Approach|\d)|$)/gim)];
+
+  if (matches.length >= 2) {
+    matches.forEach((m, idx) => {
+      const name   = (m[1] + (m[2] ? ': ' + m[2] : '')).trim();
+      const body   = m[3].trim();
+      const isRec  = idx === 0 || /recommend|prefer|chosen|selected/i.test(body);
+      const prosM  = body.match(/pros?[:\s]*((?:\n[-*].+)+)/i);
+      const consM  = body.match(/cons?[:\s]*((?:\n[-*].+)+)/i);
+      const desc   = body.replace(/pros?[:\s]*(?:\n[-*].+)+/i,'').replace(/cons?[:\s]*(?:\n[-*].+)+/i,'').trim();
+
+      const prosHtml = prosM ? prosM[1].trim().split('\n')
+        .map(l => `<li>${escHtml(l.replace(/^[-*]\s*/,''))}</li>`).join('') : '';
+      const consHtml = consM ? consM[1].trim().split('\n')
+        .map(l => `<li>${escHtml(l.replace(/^[-*]\s*/,''))}</li>`).join('') : '';
+
+      approachBlocks.push({ name, desc, prosHtml, consHtml, isRec: idx === 0 });
+    });
+  }
+
+  if (approachBlocks.length >= 2) {
+    container.innerHTML = `
+      <div class="approaches-grid">
+        ${approachBlocks.map(a => `
+          <div class="approach-card ${a.isRec ? 'recommended' : ''}">
+            <div class="approach-header ${a.isRec ? 'recommended' : ''}">
+              <span class="approach-name">${escHtml(a.name)}</span>
+              ${a.isRec ? '<span class="rec-badge">Option 1</span>' : ''}
+            </div>
+            <div class="approach-body">
+              ${a.desc ? `<p>${escHtml(a.desc)}</p>` : ''}
+              ${(a.prosHtml || a.consHtml) ? `
+              <div class="pros-cons">
+                ${a.prosHtml ? `<div>
+                  <div class="pros-label">Pros</div>
+                  <ul class="pros-list">${a.prosHtml}</ul>
+                </div>` : ''}
+                ${a.consHtml ? `<div>
+                  <div class="cons-label">Cons</div>
+                  <ul class="cons-list">${a.consHtml}</ul>
+                </div>` : ''}
+              </div>` : ''}
+            </div>
+          </div>`).join('')}
+      </div>`;
+  } else {
+    // Fall back to rendered markdown
+    container.innerHTML = `<div class="md-content">${renderMarkdown(md)}</div>`;
+  }
+}
+
+function renderImplPlan(data) {
+  const container = document.getElementById('impl-plan-content');
+  const td = data.td_docs || {};
+  const jiraId = data.jira_id || '';
+
+  if (!td.exists || !td.impl_plan) {
+    container.innerHTML = noDataPlaceholder('Implementation Plan', jiraId);
+    return;
+  }
+  container.innerHTML = `<div class="md-content">${renderMarkdown(td.impl_plan)}</div>`;
+}
+
+function renderPRAnnotations(data) {
+  const container = document.getElementById('pr-annot-content');
+  const td = data.td_docs || {};
+  const pr = data.github_pr || {};
+  const jiraId = data.jira_id || '';
+
+  let html = '';
+
+  // PR header (if available)
+  if (pr.number) {
+    const stateClass = 'pr-state-' + (pr.state || 'unknown');
+    const prLink = pr.url ? `<a href="${escHtml(pr.url)}" target="_blank" rel="noreferrer">#${escHtml(pr.number)}</a>` : `#${escHtml(pr.number)}`;
+    html += `
+      <div class="pr-header">
+        <span class="pr-number">${prLink}</span>
+        <span class="pr-title-text">${escHtml(pr.title || '')}</span>
+        <span class="pr-state-badge ${stateClass}">${escHtml(pr.state || 'unknown')}</span>
+        ${pr.merged_at ? `<span style="font:12px var(--font-mono);color:var(--gray-500)">merged ${relativeTime(pr.merged_at)}</span>` : ''}
+      </div>`;
+
+    if (pr.body) {
+      html += `<div class="md-content" style="margin-bottom:24px">${renderMarkdown(pr.body)}</div>`;
+    }
+  }
+
+  // td-docs annotations
+  if (td.exists && td.pr_annotations) {
+    html += `
+      <div style="margin-bottom:8px;font:500 13px var(--font-sans);color:var(--gray-500);
+                  text-transform:uppercase;letter-spacing:.04em">Annotations from td-docs</div>
+      <div class="md-content">${renderMarkdown(td.pr_annotations)}</div>`;
+  }
+
+  if (!html) {
+    html = noDataPlaceholder('PR Annotations', jiraId);
+    if (!pr.number) {
+      html += `<div style="margin-top:16px;font:13px var(--font-sans);color:var(--gray-500);padding:12px;background:var(--gray-150);border-radius:8px">
+        No PR found for branch <code style="font-family:var(--font-mono)">${escHtml((data.worktree||{}).branch || '')}</code>.
+        GitHub API returned 404 — ensure your PAT has repo scope.
+      </div>`;
+    }
+  }
+
+  container.innerHTML = html;
+}
+
+function renderStatus(data) {
+  const container = document.getElementById('status-content');
+  const pr        = data.github_pr || {};
+  const dsrRuns   = data.dsr_runs  || [];
+  const wt        = data.worktree  || {};
+
+  // Split DSR vs DFR
+  const dsrList = dsrRuns.filter(r => (r.Request_Type||'').toUpperCase() === 'DSR');
+  const dfrList = dsrRuns.filter(r => (r.Request_Type||'').toUpperCase() === 'DFR');
+
+  // ── PR Status card ──
+  let prHtml = '';
+  if (pr.number) {
+    const stateClass = 'pr-state-' + (pr.state || 'unknown');
+    prHtml = `
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <span class="pr-number" style="font:500 15px var(--font-mono);color:var(--info)">
+          <a href="${escHtml(pr.url)}" target="_blank" rel="noreferrer" style="color:inherit;text-decoration:none">
+            #${escHtml(pr.number)}
+          </a>
+        </span>
+        <span class="pr-state-badge ${stateClass}">${escHtml(pr.state)}</span>
+        <span style="font:13px var(--font-sans);color:var(--gray-700);flex:1">${escHtml(pr.title || '')}</span>
+      </div>
+      ${pr.merged_at ? `<div style="margin-top:8px;font:12px var(--font-mono);color:var(--gray-500)">Merged ${relativeTime(pr.merged_at)}</div>` : ''}`;
+  } else {
+    prHtml = `<div style="font:13px var(--font-sans);color:var(--gray-500)">
+      No PR found for branch <code style="font:12px var(--font-mono)">${escHtml(wt.branch||'unknown')}</code>.
+    </div>`;
+  }
+
+  // ── DSR runs ──
+  function renderRuns(runs, label) {
+    if (!runs.length) {
+      return `<div class="no-data" style="padding:24px 0">
+        <p>No ${label} runs found for this branch.</p>
+      </div>`;
+    }
+    return runs.map(r => {
+      const detail = r.detail || {};
+      const buildJobs    = (detail.build_jobs   || []);
+      const platformJobs = (detail.platform_jobs|| []);
+
+      return `
+        <div class="dsr-run">
+          <div class="dsr-run-header">
+            <span class="dsr-id">
+              <a href="${escHtml((window.WB_CONFIG.dsr_host ? window.WB_CONFIG.dsr_host + '/requests/' + (r.Request_ID||'') : '#'))}"
+                 target="_blank" rel="noreferrer"
+                 style="color:inherit;text-decoration:none">#${escHtml(String(r.Request_ID||''))}</a>
+            </span>
+            <span class="run-status-badge ${dsrStatusClass(r.Status)}">${escHtml(r.Status||'?')}</span>
+            <span class="dsr-branch">${escHtml(r.Branch||'')}</span>
+            <span class="dsr-time">${relativeTime(r.Started_at)}</span>
+          </div>
+          ${(buildJobs.length || platformJobs.length) ? `
+          <div class="dsr-jobs">
+            ${[...buildJobs, ...platformJobs].map(j => `
+              <div class="dsr-job">
+                <span class="job-status ${jobDotClass(j.status_id)}"></span>
+                <span class="job-name">${escHtml(j.name||j.job_name||'')}</span>
+                ${j.platform ? `<span style="font:11px var(--font-sans);color:var(--info)">${escHtml(j.platform)}</span>` : ''}
+                ${j.link ? `<a href="${escHtml(j.link)}" target="_blank" rel="noreferrer" style="font:11px var(--font-sans);color:var(--clay);margin-left:auto">View</a>` : ''}
+                ${j.comments && !j.link ? `<span class="job-comment">${escHtml(String(j.comments||'').slice(0,60))}</span>` : ''}
+              </div>`).join('')}
+          </div>` : ''}
+        </div>`;
+    }).join('');
+  }
+
+  container.innerHTML = `
+    <div class="status-grid">
+      <div class="status-card">
+        <div class="status-card-header">GitHub PR</div>
+        <div class="status-card-body">${prHtml}</div>
+      </div>
+      <div class="status-card">
+        <div class="status-card-header">Worktree</div>
+        <div class="status-card-body">
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div class="meta-item">
+              <span class="meta-label">Name</span>
+              <span class="meta-value">${escHtml(wt.name||'—')}</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-label">Branch</span>
+              <span class="meta-value" style="font-family:var(--font-mono);font-size:13px;color:var(--clay)">${escHtml(wt.branch||'—')}</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-label">Path</span>
+              <span class="meta-value" style="font-family:var(--font-mono);font-size:12px;color:var(--gray-500)">${escHtml(wt.path||'—')}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="status-grid" style="margin-top:16px">
+      <div class="status-card">
+        <div class="status-card-header">DSR Runs <span style="font:500 11px var(--font-mono);margin-left:8px;padding:1px 6px;background:rgba(0,0,0,.1);border-radius:4px">${dsrList.length}</span></div>
+        <div class="status-card-body">${renderRuns(dsrList, 'DSR')}</div>
+      </div>
+      <div class="status-card">
+        <div class="status-card-header">DFR Runs <span style="font:500 11px var(--font-mono);margin-left:8px;padding:1px 6px;background:rgba(0,0,0,.1);border-radius:4px">${dfrList.length}</span></div>
+        <div class="status-card-body">${renderRuns(dfrList, 'DFR')}</div>
+      </div>
+    </div>`;
+}
+
+// ── Ticket meta strip ──────────────────────────────────────────────────────
+function renderMeta(data) {
+  const jd = data.jira_detail || {};
+  const wt = data.worktree    || {};
+  const pr = data.github_pr   || {};
+
+  const statusMap = {
+    'in progress': 'status-ip',
+    'to do': 'status-todo',
+    'open': 'status-todo',
+    'done': 'status-done',
+    'closed': 'status-done',
+    'resolved': 'status-done',
+  };
+  const stClass = statusMap[(jd.status||'').toLowerCase()] || 'status-todo';
+
+  document.getElementById('ticket-id').textContent      = data.jira_id || '—';
+  document.getElementById('ticket-summary').textContent = jd.summary   || '—';
+  document.getElementById('ticket-status').textContent  = jd.status    || '—';
+  document.getElementById('ticket-status').className    = 'status-badge ' + stClass;
+  document.title = (data.jira_id || 'JIRA') + ' — Workbench';
+
+  const fields = [
+    { label: 'Type',     value: jd.type || '—' },
+    { label: 'Assignee', value: jd.assignee || '—' },
+    { label: 'Updated',  value: relativeTime(jd.updated || '') || '—' },
+    { label: 'Worktree', value: wt.name || '—' },
+    { label: 'Branch',   value: `<span style="font-family:var(--font-mono);font-size:12px;color:var(--clay)">${escHtml(wt.branch||'—')}</span>` },
+    { label: 'JIRA',     value: jd.url ? `<a href="${escHtml(jd.url)}" target="_blank" rel="noreferrer">Open in JIRA ↗</a>` : '—' },
+  ];
+
+  document.getElementById('ticket-meta').innerHTML = fields.map(f => `
+    <div class="meta-item">
+      <span class="meta-label">${escHtml(f.label)}</span>
+      <span class="meta-value">${f.value}</span>
+    </div>`).join('');
+}
+
+// ── Dark mode ──────────────────────────────────────────────────────────────
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  const btn = document.getElementById('btn-theme');
+  if (btn) btn.textContent = theme === 'dark' ? '☾' : '☀';
+}
+function toggleTheme() {
+  const cur  = document.documentElement.getAttribute('data-theme') || 'light';
+  const next = cur === 'dark' ? 'light' : 'dark';
+  localStorage.setItem('wb-theme', next);
+  applyTheme(next);
+}
+applyTheme(localStorage.getItem('wb-theme') || 'light');
+
+// Re-apply on bfcache restore (browser back/forward)
+window.addEventListener('pageshow', () =>
+  applyTheme(localStorage.getItem('wb-theme') || 'light'));
+
+// Sync if another page changes the theme while this one is open
+window.addEventListener('storage', e => {
+  if (e.key === 'wb-theme') applyTheme(e.newValue || 'light');
+});
+
+// ── Worktree dropdown ──────────────────────────────────────────────────────
+const API_BASE = '';
+
+async function populateWorktreeDropdown(jiraId) {
+  const sel = document.getElementById('wt-select');
+  const btn = document.getElementById('btn-fetch');
+
+  try {
+    const BASE = window.location.pathname.replace(/\/[^/]*$/, '');
+    const r = await fetch(BASE + '/data/worktrees.json?t=' + Date.now(), { cache: 'no-store' });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const worktrees = await r.json();
+
+    // Rebuild options (keep the leading blank "select…" option)
+    while (sel.options.length > 1) sel.remove(1);
+
+    worktrees.forEach(wt => {
+      const opt = document.createElement('option');
+      opt.value = wt.name;
+      const jiraMatch = (wt.jira_ids || []).includes(jiraId);
+      opt.textContent = wt.name + ' [' + (wt.branch || '?') + ']' + (jiraMatch ? ' ★' : '');
+      if (jiraMatch) opt.style.fontWeight = '600';
+      sel.appendChild(opt);
+    });
+
+    // Pre-select the best match and enable the button
+    const best = worktrees.find(w => (w.jira_ids || []).includes(jiraId));
+    if (best) sel.value = best.name;
+    btn.disabled = false;
+  } catch (e) {
+    document.getElementById('fetch-status').textContent =
+      'Could not load worktrees.json — run: bash scripts/fetch-worktrees.sh';
+    btn.disabled = true;
+  }
+}
+
+async function fetchWithWorktree() {
+  const jiraId   = new URLSearchParams(window.location.search).get('id') || '';
+  const worktree = document.getElementById('wt-select').value;
+  const btn      = document.getElementById('btn-fetch');
+  const status   = document.getElementById('fetch-status');
+  const bar      = document.getElementById('progress-bar');
+
+  if (!jiraId) return;
+
+  btn.disabled = true;
+  btn.textContent = '↻ Fetching…';
+  status.className = 'fetch-status running';
+  status.textContent = 'Running script…';
+  bar.style.display = 'block';
+
+  try {
+    let url = `/workbench/api/fetch-ticket?jira_id=${encodeURIComponent(jiraId)}`;
+    if (worktree) url += `&worktree=${encodeURIComponent(worktree)}`;
+
+    const r   = await fetch(url, { method: 'POST' });
+    const res = await r.json();
+    bar.style.display = 'none';
+
+    if (res.ok) {
+      status.className = 'fetch-status done';
+      status.textContent = '✓ Done — loading data…';
+      await loadData(jiraId);
+      status.textContent = '✓ Done';
+      setTimeout(() => { status.textContent = ''; }, 4000);
+    } else {
+      status.className = 'fetch-status failed';
+      status.textContent = '✗ Script failed — check data/server.log';
+    }
+  } catch (e) {
+    bar.style.display = 'none';
+    status.className = 'fetch-status failed';
+    const wbDir = (window.WB_CONFIG.workbench_dir || '/var/www/html/workbench');
+    status.textContent = 'Server offline — run: bash ' + wbDir + '/scripts/start-server.sh';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '↻ Fetch Data';
+  }
+}
+
+// ── Load + render data ──────────────────────────────────────────────────────
+async function loadData(jiraId) {
+  const BASE = window.location.pathname.replace(/\/[^/]*$/, '');
+  const url  = BASE + '/data/jira/' + jiraId + '.json?t=' + Date.now();
+
+  // Show loading in all panes
+  ['approaches-content','impl-plan-content','pr-annot-content','status-content'].forEach(id => {
+    document.getElementById(id).innerHTML = '<div class="loading-state">Loading…</div>';
+  });
+
+  try {
+    const res = await fetch(url, { cache: 'no-store' });
+    if (!res.ok) throw new Error('HTTP ' + res.status + ' — run fetch-jira-detail.sh ' + jiraId);
+    const data = await res.json();
+
+    renderMeta(data);
+    renderApproaches(data);
+    renderImplPlan(data);
+    renderPRAnnotations(data);
+    renderStatus(data);
+
+    // Update dropdown to reflect the loaded worktree
+    const loadedWt = (data.worktree || {}).name;
+    const sel = document.getElementById('wt-select');
+    if (loadedWt && sel) {
+      for (let i = 0; i < sel.options.length; i++) {
+        if (sel.options[i].value === loadedWt) { sel.selectedIndex = i; break; }
+      }
+    }
+  } catch (e) {
+    const msg = `<div class="error-state">
+      <strong>Could not load data for ${escHtml(jiraId)}</strong><br>
+      ${escHtml(e.message)}<br><br>
+      Select a worktree above and click <strong>Fetch Data</strong>, or run:<br>
+      <code>bash ${escHtml((window.WB_CONFIG.workbench_dir||'/var/www/html/workbench'))}/scripts/fetch-jira-detail.sh ${escHtml(jiraId)}</code>
+    </div>`;
+    ['approaches-content','impl-plan-content','pr-annot-content','status-content'].forEach(id => {
+      document.getElementById(id).innerHTML = msg;
+    });
+  }
+}
+
+// ── Bootstrap ──────────────────────────────────────────────────────────────
+async function init() {
+  // Load config before rendering so DSR links and hint paths are correct.
+  await loadConfig();
+
+  const params = new URLSearchParams(window.location.search);
+  const jiraId = params.get('id') || '';
+
+  if (!jiraId) {
+    document.body.innerHTML = '<div style="padding:48px;text-align:center;color:var(--danger)">No JIRA ID in URL. Use ?id=AV-XXXXX</div>';
+    return;
+  }
+
+  document.getElementById('ticket-id').textContent = jiraId;
+
+  // Load worktree dropdown (async, non-blocking)
+  populateWorktreeDropdown(jiraId);
+
+  // Load existing data
+  await loadData(jiraId);
+}
+
+init();
+</script>
+</body>
+</html>

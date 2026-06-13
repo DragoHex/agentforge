@@ -1,0 +1,1630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dev Workbench</title>
+<script>(function(){var t=localStorage.getItem('wb-theme');if(t==='dark')document.documentElement.setAttribute('data-theme','dark');}());</script>
+<style>
+  :root {
+    --ivory:#FAF9F5; --slate:#141413; --clay:#D97757; --olive:#788C5D;
+    --oat:#E3DACC; --white:#FFFFFF; --gray-150:#F0EEE6; --gray-300:#D1CFC5;
+    --gray-500:#87867F; --gray-700:#3D3D3A; --danger:#B04A4A;
+    --warning:#C78E3F; --info:#5C7CA3;
+    --font-sans:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    --font-mono:ui-monospace,"SF Mono","Cascadia Code",Menlo,monospace;
+    --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px; --sp-5:24px;
+    --sp-6:32px; --sp-7:44px; --sp-8:60px;
+    --r-xs:4px; --r-sm:8px; --r-md:12px; --r-lg:20px;
+    --shadow-sm:0 1px 2px rgba(0,0,0,.06); --shadow-md:0 4px 10px rgba(0,0,0,.08);
+  }
+  /* ── Dark mode overrides ── */
+  [data-theme="dark"] {
+    --ivory:#1C1C1A; --slate:#E6E4DE; --oat:#2A2A27; --white:#242421;
+    --gray-150:#2E2E2B; --gray-300:#3D3D3A; --gray-500:#8C8A83; --gray-700:#C2C0B8;
+    --shadow-sm:0 1px 3px rgba(0,0,0,.3); --shadow-md:0 4px 12px rgba(0,0,0,.4);
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{font:430 16px/1.55 var(--font-sans);color:var(--slate);background:var(--ivory);
+       -webkit-font-smoothing:antialiased;transition:background .2s,color .2s;
+       display:flex;min-height:100vh}
+
+  /* ── Sidebar ── */
+  .sidebar{width:216px;min-width:216px;background:var(--white);border-right:1px solid var(--gray-300);
+           display:flex;flex-direction:column;position:sticky;top:0;
+           height:100vh;flex-shrink:0;transition:width .2s ease,min-width .2s ease;overflow:hidden}
+  .sidebar.collapsed{width:48px;min-width:48px}
+  .sidebar-header{display:flex;align-items:center;justify-content:space-between;
+                  padding:var(--sp-3) var(--sp-3) var(--sp-3) var(--sp-4);
+                  border-bottom:1px solid var(--gray-150);flex-shrink:0}
+  .sidebar-logo{font:600 14px var(--font-sans);color:var(--slate);white-space:nowrap;overflow:hidden}
+  .btn-burger{width:28px;height:28px;border:none;background:transparent;color:var(--gray-500);
+              cursor:pointer;border-radius:var(--r-xs);display:flex;align-items:center;
+              justify-content:center;flex-shrink:0;transition:background .12s,color .12s;padding:0}
+  .btn-burger:hover{background:var(--gray-150);color:var(--slate)}
+  .btn-burger .icon-burger{display:none}
+  .btn-burger .icon-back{display:block}
+  .sidebar.collapsed .btn-burger .icon-burger{display:block}
+  .sidebar.collapsed .btn-burger .icon-back{display:none}
+  .sidebar.collapsed .sidebar-header{justify-content:center;padding:var(--sp-3)}
+  .sidebar.collapsed .sidebar-logo{display:none}
+  .sidebar-body{display:flex;flex-direction:column;flex:1;overflow-y:auto;overflow-x:hidden;
+                padding-top:var(--sp-3)}
+  .sidebar.collapsed .sidebar-body{display:none}
+  .sidebar-label{font:500 10px var(--font-sans);color:var(--gray-500);padding:0 var(--sp-4) var(--sp-1);
+                 text-transform:uppercase;letter-spacing:.06em}
+  .project-list{list-style:none;padding:0;margin:0}
+  .project-item{position:relative}
+  .project-item a{display:flex;align-items:center;gap:var(--sp-2);padding:7px var(--sp-4);
+                  padding-right:var(--sp-7);font:430 13px var(--font-sans);color:var(--gray-700);
+                  text-decoration:none;transition:background .12s,color .12s}
+  .project-item a:hover{background:var(--gray-150);color:var(--slate)}
+  .project-item.active a{background:rgba(217,119,87,.08);color:var(--clay);font-weight:500}
+  .project-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+  .sidebar-loading{font:12px var(--font-sans);color:var(--gray-500);padding:var(--sp-2) var(--sp-4)}
+  /* 3-dot menu button per project */
+  .btn-proj-menu{position:absolute;right:6px;top:50%;transform:translateY(-50%);
+                 width:22px;height:22px;border:none;background:transparent;color:var(--gray-500);
+                 cursor:pointer;border-radius:var(--r-xs);font-size:17px;line-height:1;
+                 display:flex;align-items:center;justify-content:center;
+                 opacity:0;pointer-events:none;transition:background .1s,opacity .1s;padding:0}
+  .project-item:hover .btn-proj-menu,
+  .project-item:focus-within .btn-proj-menu{opacity:1;pointer-events:auto}
+  .btn-proj-menu:hover{background:var(--oat);color:var(--slate)}
+  .proj-dropdown{position:absolute;right:4px;top:calc(100% - 4px);z-index:200;
+                 background:var(--white);border:1px solid var(--gray-300);
+                 border-radius:var(--r-sm);box-shadow:var(--shadow-md);
+                 min-width:110px;display:none}
+  .proj-dropdown.open{display:block}
+  .proj-dropdown button{display:block;width:100%;text-align:left;padding:7px var(--sp-3);
+                        font:430 13px var(--font-sans);color:var(--gray-700);background:transparent;
+                        border:none;cursor:pointer;transition:background .1s}
+  .proj-dropdown button:hover{background:var(--gray-150)}
+  .proj-dropdown .dd-danger{color:var(--danger)}
+  .proj-dropdown .dd-danger:hover{background:#FDE8E8}
+  /* sidebar footer */
+  .sidebar-footer{padding:var(--sp-3) var(--sp-4);border-top:1px solid var(--gray-150);flex-shrink:0}
+  /* sidebar theme toggle section */
+  .sidebar-theme-section{padding:var(--sp-3) var(--sp-4);border-top:1px solid var(--gray-150);flex-shrink:0;
+                         display:flex;align-items:center;justify-content:flex-start;margin-top:auto}
+  .btn-add-project{width:100%;padding:6px 0;font:500 12px var(--font-sans);color:var(--gray-500);
+                   background:transparent;border:1px dashed var(--gray-300);border-radius:var(--r-sm);
+                   cursor:pointer;transition:background .12s,color .12s,border-color .12s}
+  .btn-add-project:hover{background:var(--gray-150);color:var(--slate);border-color:var(--gray-500)}
+  /* ── Modal ── */
+  .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:300}
+  .modal{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:310;
+         background:var(--white);border-radius:var(--r-lg);box-shadow:var(--shadow-md);
+         width:min(560px,96vw);max-height:90vh;display:flex;flex-direction:column;overflow:hidden}
+  .modal--sm{width:min(400px,94vw)}
+  .modal-header{display:flex;align-items:center;justify-content:space-between;
+                padding:var(--sp-4) var(--sp-5);border-bottom:1px solid var(--gray-150);flex-shrink:0}
+  .modal-title{font:500 16px var(--font-sans);color:var(--slate)}
+  .modal-close{width:28px;height:28px;border:none;background:transparent;color:var(--gray-500);
+               cursor:pointer;font-size:18px;border-radius:var(--r-xs);
+               display:flex;align-items:center;justify-content:center;line-height:1;padding:0}
+  .modal-close:hover{background:var(--gray-150);color:var(--slate)}
+  .modal-body{padding:var(--sp-4) var(--sp-5);overflow-y:auto;flex:1}
+  .modal-body p{font:430 14px/1.55 var(--font-sans);color:var(--slate)}
+  .modal-footer{display:flex;justify-content:flex-end;gap:var(--sp-2);
+                padding:var(--sp-3) var(--sp-5);border-top:1px solid var(--gray-150);flex-shrink:0}
+  /* form elements */
+  .form-group{margin-bottom:var(--sp-3)}
+  .form-row{display:flex;gap:var(--sp-3)}
+  .form-row .form-group{flex:1}
+  .form-label{display:block;font:500 11px var(--font-sans);color:var(--gray-700);
+              margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em}
+  .form-input{width:100%;padding:7px var(--sp-3);font:430 13px var(--font-sans);color:var(--slate);
+              background:var(--ivory);border:1px solid var(--gray-300);border-radius:var(--r-sm);
+              outline:none;transition:border-color .12s}
+  .form-input:focus{border-color:var(--clay);background:var(--white)}
+  .form-input:disabled{opacity:.55;cursor:not-allowed}
+  select.form-input{appearance:none;-webkit-appearance:none;cursor:pointer;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23888'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:right 10px center;padding-right:28px}
+  select.form-input:disabled{opacity:.55;cursor:not-allowed}
+  .form-hint-inline{font:11px var(--font-sans);color:var(--gray-400);margin-left:4px}
+  .form-color{width:44px;height:32px;padding:2px;border:1px solid var(--gray-300);
+              border-radius:var(--r-sm);cursor:pointer;background:none}
+  .form-hint{font:11px var(--font-sans);color:var(--gray-500);margin-top:3px;display:block}
+  .form-section{font:600 11px var(--font-sans);color:var(--gray-500);text-transform:uppercase;
+                letter-spacing:.06em;padding:var(--sp-3) 0 var(--sp-2);
+                border-bottom:1px solid var(--gray-150);margin-bottom:var(--sp-2)}
+  .form-error{background:#FDE8E8;border:1px solid #F0C0C0;border-radius:var(--r-sm);
+              color:var(--danger);font-size:12px;padding:var(--sp-2) var(--sp-3);margin-top:var(--sp-3)}
+  /* modal buttons */
+  .btn-cancel{padding:7px 18px;font:500 13px var(--font-sans);border:1px solid var(--gray-300);
+              border-radius:var(--r-sm);background:var(--white);color:var(--gray-700);
+              cursor:pointer;transition:background .12s}
+  .btn-cancel:hover{background:var(--gray-150)}
+  .btn-save{padding:7px 18px;font:500 13px var(--font-sans);border:none;border-radius:var(--r-sm);
+            background:var(--clay);color:#fff;cursor:pointer;transition:background .12s,opacity .12s}
+  .btn-save:hover{background:#c86744}
+  .btn-save:disabled{opacity:.5;pointer-events:none}
+  .btn-danger{padding:7px 18px;font:500 13px var(--font-sans);border:none;border-radius:var(--r-sm);
+              background:var(--danger);color:#fff;cursor:pointer;transition:background .12s}
+  .btn-danger:hover{background:#943c3c}
+
+  /* ── Main content area ── */
+  .main-content{flex:1;max-width:1200px;padding:var(--sp-6) var(--sp-5);min-width:0}
+
+  /* ── Header ── */
+  .header{display:flex;align-items:center;justify-content:space-between;
+          margin-bottom:var(--sp-6);padding-bottom:var(--sp-4);
+          border-bottom:1px solid var(--gray-300)}
+  .header-left{display:flex;flex-direction:column;gap:4px}
+  .header-title{font:500 28px/1.2 var(--font-sans);color:var(--slate)}
+  .header-meta .last-updated{font:13px var(--font-mono);color:var(--gray-500)}
+  .header-right{display:flex;align-items:center;gap:var(--sp-2)}
+  .btn-refresh{display:inline-flex;align-items:center;gap:var(--sp-2);
+               font:500 13px var(--font-sans);padding:6px 14px;border:1px solid var(--gray-300);
+               border-radius:var(--r-sm);background:var(--white);color:var(--slate);
+               cursor:pointer;transition:background .15s,border-color .15s}
+  .btn-refresh:hover{background:var(--gray-150);border-color:var(--gray-500)}
+  .btn-refresh.loading{opacity:.6;pointer-events:none}
+  /* ── Theme toggle ── */
+  .btn-theme{width:36px;height:36px;border-radius:50%;border:1px solid var(--gray-300);
+             background:var(--white);cursor:pointer;font-size:16px;
+             display:flex;align-items:center;justify-content:center;
+             transition:background .15s,border-color .15s,transform .2s}
+  .btn-theme:hover{background:var(--gray-150);transform:rotate(20deg)}
+
+  /* ── Section headings ── */
+  .section{margin-bottom:var(--sp-8)}
+  .section-header{display:flex;align-items:baseline;gap:var(--sp-3);
+                  margin-bottom:var(--sp-4);padding-bottom:var(--sp-2);
+                  border-bottom:2px solid var(--gray-300)}
+  .section-title{font:500 22px/1.3 var(--font-sans)}
+  .section-count{font:500 12px var(--font-sans);color:var(--gray-500);
+                 background:var(--gray-150);padding:2px 8px;
+                 border-radius:var(--r-xs);letter-spacing:.02em}
+
+  /* ── Worktree list ── */
+  .worktree-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:var(--sp-3)}
+  .worktree-card{background:var(--white);border:1px solid var(--gray-300);
+                 border-radius:var(--r-md);padding:var(--sp-4);
+                 box-shadow:var(--shadow-sm);transition:box-shadow .15s}
+  .worktree-card:hover{box-shadow:var(--shadow-md)}
+  .wt-name{font:500 15px/1.3 var(--font-sans);margin-bottom:var(--sp-1)}
+  .wt-branch{font:13px var(--font-mono);color:var(--clay);
+             background:rgba(217,119,87,.08);padding:2px 6px;
+             border-radius:var(--r-xs);display:inline-block;margin-bottom:var(--sp-2)}
+  .wt-commit{font:12px/1.5 var(--font-sans);color:var(--gray-500);
+             white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .wt-commit .hash{font-family:var(--font-mono);color:var(--gray-700)}
+  .wt-footer{display:flex;align-items:center;justify-content:space-between;
+             margin-top:var(--sp-3);padding-top:var(--sp-2);
+             border-top:1px solid var(--gray-150)}
+  .wt-jira-chips{display:flex;flex-wrap:wrap;gap:4px}
+  .jira-chip{font:500 11px var(--font-mono);padding:2px 6px;
+             border-radius:var(--r-xs);background:var(--info);color:var(--white);
+             text-decoration:none;cursor:pointer}
+  .jira-chip:hover{background:var(--slate);color:var(--white)}
+  .td-docs-badge{font:500 11px var(--font-sans);padding:2px 8px;
+                 border-radius:var(--r-xs);background:var(--olive);color:var(--white)}
+
+  /* ── Sprint board ── */
+  .sprint-board{display:grid;grid-template-columns:1fr 1fr 1fr;gap:var(--sp-4)}
+  .sprint-col{background:var(--white);border:1px solid var(--gray-300);
+              border-radius:var(--r-md);overflow:hidden;box-shadow:var(--shadow-sm)}
+  .sprint-col-header{padding:var(--sp-3) var(--sp-4);font:500 13px var(--font-sans);
+                     text-transform:uppercase;letter-spacing:.04em;
+                     display:flex;align-items:center;justify-content:space-between}
+  .col-todo   .sprint-col-header{background:var(--gray-150);color:var(--gray-700)}
+  .col-ip     .sprint-col-header{background:rgba(217,119,87,.12);color:#9B4E28}
+  .col-done   .sprint-col-header{background:rgba(120,140,93,.12);color:#4A5E35}
+  .sprint-col-body{padding:var(--sp-2)}
+  .col-count{font:500 12px var(--font-mono);padding:1px 8px;border-radius:10px;
+             background:rgba(0,0,0,.08)}
+
+  /* ── JIRA ticket cards ── */
+  .ticket-card{border:1px solid var(--gray-300);border-radius:var(--r-sm);
+               padding:var(--sp-3) var(--sp-4);margin-bottom:var(--sp-2);
+               background:var(--ivory);transition:box-shadow .15s,border-color .15s,opacity .15s;
+               cursor:grab}
+  .ticket-card:active{cursor:grabbing}
+  .ticket-card.clickable{cursor:grab}
+  .ticket-card.clickable:hover{box-shadow:var(--shadow-md);border-color:var(--clay)}
+  .ticket-card.clickable:hover .ticket-key{color:var(--clay)}
+  /* ── Drag-and-drop states ── */
+  .ticket-card{cursor:default}
+  .ticket-card.clickable{cursor:default}
+  .ticket-drag-body{cursor:grab;user-select:none}
+  .ticket-drag-body:active{cursor:grabbing}
+  .ticket-card.dragging{opacity:.35;transform:rotate(1.5deg)}
+  .ticket-card.updating{opacity:.5;pointer-events:none}
+  .sprint-col-body.drag-over{outline:2px dashed var(--clay);outline-offset:-2px;
+                              background:rgba(217,119,87,.06);border-radius:var(--r-sm)}
+  .col-todo .sprint-col-body.drag-over{outline-color:var(--gray-500);background:rgba(0,0,0,.03)}
+  .col-done .sprint-col-body.drag-over{outline-color:#5a8a40;background:rgba(120,140,93,.07)}
+  #transition-error{display:none;background:#FDE8E8;border:1px solid #F0C0C0;
+                    border-radius:var(--r-sm);padding:var(--sp-3) var(--sp-4);
+                    color:var(--danger);font-size:13px;margin-bottom:var(--sp-3)}
+  .ticket-key{font:500 12px var(--font-mono);color:var(--info);margin-bottom:4px;
+              text-decoration:none;display:block}
+  .ticket-summary{font:430 13px/1.45 var(--font-sans);color:var(--slate);
+                  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
+                  overflow:hidden}
+  .ticket-meta{display:flex;align-items:center;gap:var(--sp-2);margin-top:var(--sp-2);
+               flex-wrap:wrap}
+  .badge{display:inline-block;font:500 11px/1.4 var(--font-sans);
+         padding:1px 7px;border-radius:var(--r-xs);text-transform:uppercase;
+         letter-spacing:.03em;white-space:nowrap}
+  .badge-type-bug    {background:#FDE8E8;color:var(--danger)}
+  .badge-type-task   {background:#E8EEF5;color:var(--info)}
+  .badge-type-story  {background:#EAF0E4;color:var(--olive)}
+  .badge-type-default{background:var(--gray-150);color:var(--gray-700)}
+  .badge-prio        {background:var(--gray-150);color:var(--gray-700)}
+  .ticket-updated    {font:12px var(--font-mono);color:var(--gray-500);margin-left:auto}
+
+  /* ── Loading / error states ── */
+  .loading-state{text-align:center;padding:var(--sp-7);color:var(--gray-500)}
+  .loading-dot{display:inline-block;animation:blink 1.2s ease-in-out infinite}
+  .loading-dot:nth-child(2){animation-delay:.2s}
+  .loading-dot:nth-child(3){animation-delay:.4s}
+  @keyframes blink{0%,80%,100%{opacity:.2}40%{opacity:1}}
+  .error-state{background:#FDE8E8;border:1px solid #F0C0C0;border-radius:var(--r-sm);
+               padding:var(--sp-4);color:var(--danger);font-size:14px}
+  .empty-col{text-align:center;padding:var(--sp-5);color:var(--gray-500);font-size:13px}
+
+  /* ── Active PRs ── */
+  .pr-subsection{}
+  .pr-subsection-header{display:flex;align-items:center;gap:var(--sp-2);
+                         margin-bottom:var(--sp-3)}
+  .pr-subsection-title{font:500 14px var(--font-sans);color:var(--gray-700);
+                        text-transform:uppercase;letter-spacing:.05em}
+  .pr-subsection-count{font:500 11px var(--font-mono);padding:1px 8px;
+                        border-radius:10px;background:var(--gray-150);color:var(--gray-500)}
+  .pr-subsection-empty{font:13px var(--font-sans);color:var(--gray-500);
+                        padding:var(--sp-3) 0}
+  .pr-list{display:flex;flex-direction:column;gap:var(--sp-2)}
+  .pr-card{background:var(--white);border:1px solid var(--gray-300);
+           border-radius:var(--r-md);overflow:hidden;
+           box-shadow:var(--shadow-sm);transition:box-shadow .15s}
+  .pr-card:hover{box-shadow:var(--shadow-md)}
+  .pr-card-header{display:flex;align-items:center;gap:var(--sp-3);
+                  padding:var(--sp-3) var(--sp-4);cursor:pointer;
+                  user-select:none;min-height:52px}
+  .pr-card-header:hover{background:var(--gray-150)}
+  .pr-chevron{font-size:10px;color:var(--gray-500);flex-shrink:0;
+              transition:transform .2s;line-height:1}
+  .pr-card.expanded .pr-chevron{transform:rotate(90deg)}
+  .pr-repo-badge{font:500 10px var(--font-mono);padding:2px 7px;
+                 border-radius:var(--r-xs);white-space:nowrap;flex-shrink:0}
+  .repo-avi-dev {background:rgba(92,124,163,.15);color:var(--info)}
+  .repo-avi-test{background:rgba(120,140,93,.15);color:var(--olive)}
+  .pr-num{font:500 12px var(--font-mono);color:var(--gray-500);flex-shrink:0}
+  .pr-title{font:500 14px/1.35 var(--font-sans);color:var(--slate);
+            flex:1;min-width:0;
+            white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pr-meta-right{display:flex;align-items:center;gap:var(--sp-2);
+                 flex-shrink:0;margin-left:auto}
+  .pr-age{font:12px var(--font-mono);color:var(--gray-500);white-space:nowrap}
+  /* ── DSR / DFR: right-side status pills (row, next to age) ── */
+  .pr-status-pills{display:flex;flex-direction:row;align-items:center;gap:4px;flex-shrink:0}
+  .pr-status-pill{display:inline-flex;align-items:center;gap:3px;
+                  font:600 9px var(--font-mono);padding:2px 7px;
+                  border-radius:20px;white-space:nowrap;text-decoration:none;
+                  cursor:pointer;transition:filter .15s}
+  .pr-status-pill:hover{filter:brightness(.88)}
+  /* status colour tokens – green / red / yellow / grey */
+  .ps-passed {background:rgba(74,164,94,.18);color:#2d6b3a;border:1px solid rgba(74,164,94,.35)}
+  .ps-failed {background:rgba(176,74,74,.15);color:#8b2a2a;border:1px solid rgba(176,74,74,.3)}
+  .ps-running{background:rgba(199,142,63,.18);color:#7a4e10;border:1px solid rgba(199,142,63,.35)}
+  .ps-unknown{background:var(--gray-150);color:var(--gray-500);border:1px solid var(--gray-300)}
+  .ps-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+  .psd-passed {background:#2d8a45}
+  .psd-failed {background:var(--danger)}
+  .psd-running{background:var(--warning)}
+  .psd-unknown{background:var(--gray-500)}
+
+  /* ── DSR / DFR: inline indicators (right meta area, legacy) ── */
+  .pr-indicators{display:flex;align-items:center;gap:5px}
+  .pr-indicator{display:inline-flex;align-items:center;gap:3px;
+                font:500 10px var(--font-sans);padding:2px 7px;
+                border-radius:var(--r-xs);white-space:nowrap;
+                text-decoration:none;cursor:pointer}
+  .pr-indicator:hover{filter:brightness(0.9)}
+  .ind-passed  {background:rgba(120,140,93,.18);color:#4A5E35}
+  .ind-failed  {background:rgba(176,74,74,.15);color:var(--danger)}
+  .ind-aborted {background:rgba(199,142,63,.18);color:#7A5010}
+  .ind-running {background:rgba(92,124,163,.15);color:var(--info)}
+  .ind-unknown {background:var(--gray-150);color:var(--gray-500)}
+  .ind-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+  .dot-passed {background:#4A5E35}
+  .dot-failed {background:var(--danger)}
+  .dot-aborted{background:var(--warning)}
+  .dot-running{background:var(--info)}
+  .dot-unknown{background:var(--gray-500)}
+
+  /* ── Expanded DSR / DFR link list ── */
+  .pr-dsr-list{display:flex;flex-direction:column;gap:5px;margin-top:var(--sp-1)}
+  .pr-dsr-entry{display:flex;align-items:center;gap:var(--sp-2);font:12px var(--font-sans)}
+  .pr-dsr-badge{font:600 9px var(--font-mono);padding:1px 6px;border-radius:10px;
+                white-space:nowrap;flex-shrink:0}
+  .pr-dsr-link{color:var(--info);text-decoration:none;font:12px var(--font-mono);
+               overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0}
+  .pr-dsr-link:hover{text-decoration:underline}
+  .pr-dsr-status{font:500 10px var(--font-sans);padding:1px 6px;border-radius:20px;
+                 flex-shrink:0;white-space:nowrap}
+  /* Expanded body */
+  .pr-card-body{display:none;padding:0 var(--sp-4) var(--sp-4);
+                border-top:1px solid var(--gray-150)}
+  .pr-card.expanded .pr-card-body{display:block}
+  .pr-body-section{margin-top:var(--sp-3)}
+  .pr-body-label{font:500 11px var(--font-sans);color:var(--gray-500);
+                 text-transform:uppercase;letter-spacing:.05em;margin-bottom:var(--sp-2)}
+  .pr-jira-chips{display:flex;flex-wrap:wrap;gap:4px}
+  .pr-jira-chip{font:500 11px var(--font-mono);padding:2px 7px;
+                border-radius:var(--r-xs);background:var(--info);color:var(--white);
+                text-decoration:none}
+  .pr-jira-chip:hover{background:var(--slate);color:var(--white)}
+  .pr-branch{font:12px var(--font-mono);color:var(--clay);margin-top:var(--sp-1);
+             white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  /* Reviewers */
+  .reviewer-list{display:flex;flex-direction:column;gap:var(--sp-1);margin-top:var(--sp-2)}
+  .reviewer-row{display:flex;align-items:center;gap:var(--sp-2);font:13px var(--font-sans)}
+  .rv-icon{width:18px;height:18px;border-radius:50%;display:flex;align-items:center;
+           justify-content:center;font-size:9px;font-weight:700;flex-shrink:0}
+  .rv-approved          {background:rgba(45,138,69,.18);color:#1d6b33;font-weight:700}
+  .rv-changes-requested {background:rgba(176,74,74,.2);color:var(--danger)}
+  .rv-review-requested  {background:var(--gray-150);color:var(--gray-500)}
+  .rv-commented         {background:rgba(92,124,163,.15);color:var(--info)}
+  .rv-dismissed         {background:var(--gray-150);color:var(--gray-500)}
+  .rv-login{color:var(--slate);font-weight:500}
+  .rv-login.rv-approved-name{color:#1d6b33;font-weight:600}
+  .rv-state{font:11px var(--font-sans);color:var(--gray-500);text-transform:capitalize}
+  .rv-more{font:11px var(--font-sans);color:var(--gray-500);
+           padding:var(--sp-1) 0;font-style:italic}
+
+  /* ── Responsive ── */
+  @media(max-width:768px){
+    .sprint-board{grid-template-columns:1fr}
+    .worktree-grid{grid-template-columns:1fr}
+    .header{flex-direction:column;align-items:flex-start;gap:var(--sp-3)}
+    .pr-title{white-space:normal}
+  }
+</style>
+</head>
+<body>
+
+<nav id="project-sidebar" class="sidebar" aria-label="Projects">
+  <div class="sidebar-header">
+    <span class="sidebar-logo">Workbench</span>
+    <button class="btn-burger" id="btn-burger" onclick="toggleSidebar()"
+            title="Toggle sidebar" aria-label="Toggle sidebar">
+      <svg class="icon-burger" width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <line x1="2" y1="4"  x2="14" y2="4"  stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        <line x1="2" y1="8"  x2="14" y2="8"  stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        <line x1="2" y1="12" x2="14" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+      <svg class="icon-back" width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <polyline points="9,3 3,8 9,13" stroke="currentColor" stroke-width="1.5"
+                  stroke-linejoin="round" stroke-linecap="round"/>
+      </svg>
+    </button>
+  </div>
+  <div class="sidebar-body">
+    <div class="sidebar-label">Projects</div>
+    <ul id="project-list" class="project-list">
+      <li class="sidebar-loading">Loading…</li>
+    </ul>
+    <div class="sidebar-footer">
+      <button class="btn-add-project" onclick="openProjectModal(null)">+ Add Project</button>
+    </div>
+    <div class="sidebar-theme-section">
+      <button class="btn-theme" id="btn-theme" onclick="toggleTheme()" title="Toggle dark mode">☀</button>
+    </div>
+  </div>
+</nav>
+
+<div class="main-content">
+
+<div class="header">
+  <div class="header-left">
+    <div class="header-title">Dev Workbench</div>
+    <div class="header-meta">
+      <span id="last-updated" class="last-updated">Loading…</span>
+    </div>
+  </div>
+  <div class="header-right">
+    <span id="refresh-status" style="font-size:12px;color:var(--gray-500)"></span>
+    <button class="btn-refresh" id="btn-refresh" onclick="refreshData()">↻ Refresh</button>
+  </div>
+</div>
+
+<!-- ── Worktrees ──────────────────────────────────────────────────────────── -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-title">Worktrees</div>
+    <span class="section-count" id="wt-count">—</span>
+  </div>
+  <div id="worktree-container">
+    <div class="loading-state">
+      <span class="loading-dot">●</span>
+      <span class="loading-dot">●</span>
+      <span class="loading-dot">●</span>
+    </div>
+  </div>
+</div>
+
+<!-- ── Sprint Board ───────────────────────────────────────────────────────── -->
+<div class="section" style="margin-top:var(--sp-8)">
+  <div class="section-header">
+    <div class="section-title">Active Sprint</div>
+    <span class="section-count" id="sprint-count">—</span>
+  </div>
+  <div id="transition-error" style="display:none"></div>
+  <div class="sprint-board">
+    <div class="sprint-col col-todo">
+      <div class="sprint-col-header">
+        To Do <span class="col-count" id="todo-count">0</span>
+      </div>
+      <div class="sprint-col-body" id="col-todo" data-col="todo"
+           ondragover="colDragOver(event)" ondragleave="colDragLeave(event)" ondrop="colDrop(event)">
+        <div class="loading-state" style="padding:24px 0">
+          <span class="loading-dot">●</span>
+          <span class="loading-dot">●</span>
+          <span class="loading-dot">●</span>
+        </div>
+      </div>
+    </div>
+    <div class="sprint-col col-ip">
+      <div class="sprint-col-header">
+        In Progress <span class="col-count" id="ip-count">0</span>
+      </div>
+      <div class="sprint-col-body" id="col-ip" data-col="in_progress"
+           ondragover="colDragOver(event)" ondragleave="colDragLeave(event)" ondrop="colDrop(event)">
+        <div class="loading-state" style="padding:24px 0">
+          <span class="loading-dot">●</span>
+          <span class="loading-dot">●</span>
+          <span class="loading-dot">●</span>
+        </div>
+      </div>
+    </div>
+    <div class="sprint-col col-done">
+      <div class="sprint-col-header">
+        Done <span class="col-count" id="done-count">0</span>
+      </div>
+      <div class="sprint-col-body" id="col-done" data-col="done"
+           ondragover="colDragOver(event)" ondragleave="colDragLeave(event)" ondrop="colDrop(event)">
+        <div class="loading-state" style="padding:24px 0">
+          <span class="loading-dot">●</span>
+          <span class="loading-dot">●</span>
+          <span class="loading-dot">●</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Active PRs ────────────────────────────────────────────────────────── -->
+<div class="section" style="margin-top:var(--sp-8)">
+  <div class="section-header">
+    <div class="section-title">Active PRs</div>
+    <span class="section-count" id="pr-count">—</span>
+  </div>
+  <div id="pr-container">
+    <div class="loading-state">
+      <span class="loading-dot">●</span>
+      <span class="loading-dot">●</span>
+      <span class="loading-dot">●</span>
+    </div>
+  </div>
+</div>
+
+<!-- ── Project Edit / Create Modal ─────────────────────────────────────── -->
+<div id="proj-modal-backdrop" class="modal-backdrop" onclick="closeProjectModal()" style="display:none" aria-hidden="true"></div>
+<div id="proj-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="proj-modal-title" style="display:none">
+  <div class="modal-header">
+    <h2 class="modal-title" id="proj-modal-title">Edit Project</h2>
+    <button class="modal-close" onclick="closeProjectModal()" aria-label="Close">✕</button>
+  </div>
+  <div class="modal-body">
+    <input type="hidden" id="pm-pid-orig">
+    <div class="form-group">
+      <label class="form-label" for="pm-pid">Project ID</label>
+      <input class="form-input" id="pm-pid" type="text" placeholder="my-project" autocomplete="off">
+      <span class="form-hint">Lowercase letters, digits, hyphens — max 32 chars. Immutable after creation.</span>
+    </div>
+    <div class="form-row">
+      <div class="form-group" style="flex:1">
+        <label class="form-label" for="pm-display">Display Name</label>
+        <input class="form-input" id="pm-display" type="text" placeholder="My Project">
+      </div>
+      <div class="form-group" style="flex:0 0 auto">
+        <label class="form-label" for="pm-color">Color</label>
+        <input class="form-color" id="pm-color" type="color" value="#D97757">
+      </div>
+    </div>
+    <div class="form-section">Workspace</div>
+    <div class="form-group">
+      <label class="form-label" for="pm-workspace-dir">Workspace Dir</label>
+      <input class="form-input" id="pm-workspace-dir" type="text" placeholder="~/workspace">
+    </div>
+    <div class="form-section">Jira</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label" for="pm-jira-host">Host</label>
+        <input class="form-input" id="pm-jira-host" type="text" placeholder="https://jira.example.com">
+      </div>
+      <div class="form-group" style="flex:0 0 120px">
+        <label class="form-label" for="pm-jira-key">Project Key</label>
+        <input class="form-input" id="pm-jira-key" type="text" placeholder="AV">
+      </div>
+    </div>
+    <div class="form-section">GitHub</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label" for="pm-gh-host">Host</label>
+        <input class="form-input" id="pm-gh-host" type="text" placeholder="github.example.com">
+      </div>
+      <div class="form-group" style="flex:0 0 140px">
+        <label class="form-label" for="pm-gh-org">Org</label>
+        <input class="form-input" id="pm-gh-org" type="text" placeholder="my-org">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label" for="pm-repo-dev">Dev Repo</label>
+        <input class="form-input" id="pm-repo-dev" type="text">
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="pm-repo-test">Test Repo</label>
+        <input class="form-input" id="pm-repo-test" type="text">
+      </div>
+    </div>
+    <div class="form-section">DSR</div>
+    <div class="form-group">
+      <label class="form-label" for="pm-dsr-host">Host</label>
+      <input class="form-input" id="pm-dsr-host" type="text" placeholder="https://dsr.example.com">
+    </div>
+    <div class="form-section">LLM</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label" for="pm-llm-provider">Provider</label>
+        <select class="form-input" id="pm-llm-provider" onchange="onLlmProviderChange()">
+          <option value="">Detecting…</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="pm-llm-model">Model</label>
+        <select class="form-input" id="pm-llm-model" onchange="onLlmModelChange()">
+          <option value="">— select provider first —</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group" id="pm-llm-model-custom-row" style="display:none">
+      <label class="form-label" for="pm-llm-model-custom">Model name</label>
+      <input class="form-input" id="pm-llm-model-custom" type="text" placeholder="enter exact model name">
+      <span class="form-hint">Not in the list above? Type the model ID directly.</span>
+    </div>
+    <div class="form-section">Ports</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label" for="pm-api-port">API Port</label>
+        <input class="form-input" id="pm-api-port" type="number" min="1024" max="65535" value="8081">
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="pm-server-port">Server Port</label>
+        <input class="form-input" id="pm-server-port" type="number" min="1024" max="65535" value="1337">
+      </div>
+    </div>
+    <div id="pm-error" class="form-error" style="display:none"></div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn-cancel" onclick="closeProjectModal()">Cancel</button>
+    <button class="btn-save" id="pm-save-btn" onclick="saveProjectModal()">Save</button>
+  </div>
+</div>
+
+<!-- ── Delete Confirm Dialog ─────────────────────────────────────────────── -->
+<div id="confirm-backdrop" class="modal-backdrop" onclick="closeConfirm()" style="display:none" aria-hidden="true"></div>
+<div id="confirm-dialog" class="modal modal--sm" role="dialog" aria-modal="true" style="display:none">
+  <div class="modal-header">
+    <h2 class="modal-title">Delete Project</h2>
+  </div>
+  <div class="modal-body">
+    <p id="confirm-msg"></p>
+  </div>
+  <div class="modal-footer">
+    <button class="btn-cancel" onclick="closeConfirm()">Cancel</button>
+    <button class="btn-danger" id="confirm-ok-btn">Delete</button>
+  </div>
+</div>
+
+<script>
+// ── Project context ────────────────────────────────────────────────────────
+const API_BASE = '/api';
+
+function getCurrentProjectId() {
+  // URL: /workbench/<project_id>/  or  ?project=<id>  or  localStorage fallback
+  const m = window.location.pathname.match(/\/workbench\/([a-z0-9\-]+)/);
+  if (m) return m[1];
+  const qp = new URLSearchParams(window.location.search).get('project');
+  if (qp) return qp;
+  return localStorage.getItem('wb-active-project') || 'avi-network';
+}
+
+let _projectId = getCurrentProjectId();
+
+// Keep the URL in sync so browser back-button from jira-detail returns to the
+// correct project even when BFCache is not used.
+(function syncProjectUrl() {
+  if (window.location.pathname.match(/\/workbench\/([a-z0-9\-]+)/)) return; // path-based
+  if (new URLSearchParams(window.location.search).has('project')) return;   // already set
+  history.replaceState(null, '', '?project=' + encodeURIComponent(_projectId));
+})();
+
+function dataUrl(resource) {
+  return `${API_BASE}/${_projectId}/data/${resource}`;
+}
+
+// ── Sidebar collapse ────────────────────────────────────────────────────────
+function initSidebarCollapse() {
+  if (localStorage.getItem('wb-sidebar-collapsed') === '1') {
+    document.getElementById('project-sidebar').classList.add('collapsed');
+  }
+}
+
+function toggleSidebar() {
+  const sb = document.getElementById('project-sidebar');
+  const collapsed = sb.classList.toggle('collapsed');
+  localStorage.setItem('wb-sidebar-collapsed', collapsed ? '1' : '0');
+}
+
+// ── Sidebar project list ────────────────────────────────────────────────────
+async function initSidebar() {
+  try {
+    const r = await fetch(`${API_BASE}/projects`, { cache: 'no-store' });
+    if (!r.ok) return;
+    const projects = await r.json();
+    const list = document.getElementById('project-list');
+    list.innerHTML = projects.map(p => `
+      <li class="project-item${p.id === _projectId ? ' active' : ''}" data-pid="${escHtml(p.id)}">
+        <a href="?project=${encodeURIComponent(p.id)}"
+           onclick="return switchProject(event,'${escHtml(p.id)}')">
+          <span class="project-dot" style="background:${escHtml(p.color)}"></span>
+          <span>${escHtml(p.display_name)}</span>
+        </a>
+        <button class="btn-proj-menu" title="Project options"
+                onclick="toggleProjMenu(event,'${escHtml(p.id)}')"
+                aria-haspopup="true">⋯</button>
+        <div class="proj-dropdown" id="dd-${escHtml(p.id)}">
+          <button onclick="openProjectModal('${escHtml(p.id)}')">Edit</button>
+          <button onclick="renameProject('${escHtml(p.id)}')">Rename</button>
+          <button class="dd-danger" onclick="confirmDeleteProject('${escHtml(p.id)}')">Delete</button>
+        </div>
+      </li>`).join('');
+  } catch (_) {
+    document.getElementById('project-list').innerHTML =
+      '<li class="sidebar-loading">Offline</li>';
+  }
+}
+
+function switchProject(e, pid) {
+  e.preventDefault();
+  _projectId = pid;
+  localStorage.setItem('wb-active-project', pid);
+  history.replaceState(null, '', '?project=' + encodeURIComponent(pid));
+  document.querySelectorAll('.project-item').forEach(li =>
+    li.classList.toggle('active', li.dataset.pid === pid)
+  );
+  loadAll(true);
+  return false;
+}
+
+// ── Project dropdown menu ───────────────────────────────────────────────────
+function toggleProjMenu(e, pid) {
+  e.preventDefault();
+  e.stopPropagation();
+  const dd = document.getElementById(`dd-${pid}`);
+  const wasOpen = dd && dd.classList.contains('open');
+  // Close all
+  document.querySelectorAll('.proj-dropdown.open').forEach(d => d.classList.remove('open'));
+  if (!wasOpen && dd) dd.classList.add('open');
+}
+
+document.addEventListener('click', () => {
+  document.querySelectorAll('.proj-dropdown.open').forEach(d => d.classList.remove('open'));
+});
+
+// ── LLM provider detection ──────────────────────────────────────────────────
+let _llmProviders = null; // cached after first fetch
+
+async function _loadLlmProviders() {
+  if (_llmProviders) return _llmProviders;
+  try {
+    const r = await fetch(`${API_BASE}/llm-providers`, { cache: 'no-store' });
+    _llmProviders = r.ok ? await r.json() : [];
+  } catch { _llmProviders = []; }
+  return _llmProviders;
+}
+
+function _populateProviderSelect(providers, savedProvider) {
+  const sel = document.getElementById('pm-llm-provider');
+  sel.innerHTML = '';
+  if (!providers.length) {
+    sel.innerHTML = '<option value="">No providers detected</option>';
+    return;
+  }
+  // Blank "none" option only when no saved value
+  if (!savedProvider) sel.innerHTML = '<option value="">— select —</option>';
+  providers.forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p.id;
+    opt.textContent = p.name;
+    if (p.id === savedProvider) opt.selected = true;
+    sel.appendChild(opt);
+  });
+  // Fallback: saved provider not in list → add it
+  if (savedProvider && !providers.find(p => p.id === savedProvider)) {
+    const opt = document.createElement('option');
+    opt.value = savedProvider;
+    opt.textContent = savedProvider + ' (custom)';
+    opt.selected = true;
+    sel.appendChild(opt);
+  }
+}
+
+function _populateModelSelect(models, savedModel) {
+  const sel   = document.getElementById('pm-llm-model');
+  const cRow  = document.getElementById('pm-llm-model-custom-row');
+  const cIn   = document.getElementById('pm-llm-model-custom');
+  sel.innerHTML = '';
+  if (!models.length) {
+    // No known models (e.g. LM Studio) — show only the custom field
+    sel.innerHTML = '<option value="__custom__">Enter manually…</option>';
+    cRow.style.display = '';
+    cIn.value = savedModel || '';
+    return;
+  }
+  if (!savedModel) sel.innerHTML = '<option value="">— select —</option>';
+  models.forEach(m => {
+    const opt = document.createElement('option');
+    opt.value = m;
+    opt.textContent = m;
+    if (m === savedModel) opt.selected = true;
+    sel.appendChild(opt);
+  });
+  const opt = document.createElement('option');
+  opt.value = '__custom__';
+  opt.textContent = 'Other…';
+  if (savedModel && !models.includes(savedModel)) opt.selected = true;
+  sel.appendChild(opt);
+  // If saved model isn't in list, show custom input pre-filled
+  if (savedModel && !models.includes(savedModel)) {
+    cRow.style.display = '';
+    cIn.value = savedModel;
+  } else {
+    cRow.style.display = 'none';
+    cIn.value = '';
+  }
+}
+
+function onLlmProviderChange() {
+  const pid = document.getElementById('pm-llm-provider').value;
+  if (!pid || !_llmProviders) {
+    document.getElementById('pm-llm-model').innerHTML = '<option value="">— select provider first —</option>';
+    document.getElementById('pm-llm-model-custom-row').style.display = 'none';
+    return;
+  }
+  const provider = _llmProviders.find(p => p.id === pid);
+  _populateModelSelect(provider ? provider.models : [], '');
+}
+
+function onLlmModelChange() {
+  const sel  = document.getElementById('pm-llm-model');
+  const cRow = document.getElementById('pm-llm-model-custom-row');
+  const cIn  = document.getElementById('pm-llm-model-custom');
+  if (sel.value === '__custom__') {
+    cRow.style.display = '';
+    cIn.focus();
+  } else {
+    cRow.style.display = 'none';
+    cIn.value = '';
+  }
+}
+
+// ── Project modal (create / edit) ───────────────────────────────────────────
+async function openProjectModal(pid) {
+  document.querySelectorAll('.proj-dropdown.open').forEach(d => d.classList.remove('open'));
+  const isCreate = !pid;
+  document.getElementById('proj-modal-title').textContent = isCreate ? 'Add Project' : 'Edit Project';
+  document.getElementById('pm-pid-orig').value = pid || '';
+  document.getElementById('pm-pid').disabled = !isCreate;
+  document.getElementById('pm-error').style.display = 'none';
+  document.getElementById('pm-save-btn').disabled = false;
+
+  // Reset text fields
+  ['pm-pid','pm-display','pm-workspace-dir','pm-jira-host','pm-jira-key',
+   'pm-gh-host','pm-gh-org','pm-repo-dev','pm-repo-test','pm-dsr-host'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  document.getElementById('pm-color').value = '#D97757';
+  document.getElementById('pm-api-port').value = '8081';
+  document.getElementById('pm-server-port').value = '1337';
+
+  // Show modal first so user sees it immediately while providers load
+  document.getElementById('proj-modal-backdrop').style.display = '';
+  document.getElementById('proj-modal').style.display = '';
+  setTimeout(() => {
+    const first = document.getElementById(isCreate ? 'pm-pid' : 'pm-display');
+    if (first) first.focus();
+  }, 50);
+
+  // Load providers (cached after first call) then fill selects
+  const [providers, cfg] = await Promise.all([
+    _loadLlmProviders(),
+    isCreate ? Promise.resolve(null) : fetch(`${API_BASE}/${pid}/config`, { cache: 'no-store' })
+      .then(r => r.ok ? r.json() : Promise.reject(new Error('Failed to load config')))
+      .catch(err => { _pmShowError(err.message); return null; }),
+  ]);
+
+  const savedProvider = cfg ? (cfg.llm_provider || '') : '';
+  const savedModel    = cfg ? (cfg.llm_model    || '') : '';
+  _populateProviderSelect(providers, savedProvider);
+  const selProvider = document.getElementById('pm-llm-provider').value;
+  const providerObj = providers.find(p => p.id === selProvider);
+  _populateModelSelect(providerObj ? providerObj.models : [], savedModel);
+
+  if (cfg) {
+    document.getElementById('pm-pid').value            = cfg.project_id       || '';
+    document.getElementById('pm-display').value        = cfg.display_name     || '';
+    document.getElementById('pm-color').value          = cfg.color            || '#888888';
+    document.getElementById('pm-workspace-dir').value  = cfg.workspace_dir    || '';
+    document.getElementById('pm-jira-host').value      = cfg.jira_host        || '';
+    document.getElementById('pm-jira-key').value       = cfg.jira_project_key || '';
+    document.getElementById('pm-gh-host').value        = cfg.gh_host          || '';
+    document.getElementById('pm-gh-org').value         = cfg.gh_org           || '';
+    document.getElementById('pm-repo-dev').value       = cfg.repo_dev         || '';
+    document.getElementById('pm-repo-test').value      = cfg.repo_test        || '';
+    document.getElementById('pm-dsr-host').value       = cfg.dsr_host         || '';
+    document.getElementById('pm-api-port').value       = cfg.api_port         || '8081';
+    document.getElementById('pm-server-port').value    = cfg.server_port      || '1337';
+  }
+}
+
+function closeProjectModal() {
+  document.getElementById('proj-modal-backdrop').style.display = 'none';
+  document.getElementById('proj-modal').style.display = 'none';
+}
+
+function _pmShowError(msg) {
+  const el = document.getElementById('pm-error');
+  el.textContent = msg;
+  el.style.display = '';
+}
+
+async function saveProjectModal() {
+  const pidOrig  = document.getElementById('pm-pid-orig').value;
+  const isCreate = !pidOrig;
+  document.getElementById('pm-error').style.display = 'none';
+  document.getElementById('pm-save-btn').disabled = true;
+
+  const body = {
+    project_id:       document.getElementById('pm-pid').value.trim(),
+    display_name:     document.getElementById('pm-display').value.trim(),
+    color:            document.getElementById('pm-color').value,
+    workspace_dir:    document.getElementById('pm-workspace-dir').value.trim(),
+    jira_host:        document.getElementById('pm-jira-host').value.trim(),
+    jira_project_key: document.getElementById('pm-jira-key').value.trim(),
+    gh_host:          document.getElementById('pm-gh-host').value.trim(),
+    gh_org:           document.getElementById('pm-gh-org').value.trim(),
+    repo_dev:         document.getElementById('pm-repo-dev').value.trim(),
+    repo_test:        document.getElementById('pm-repo-test').value.trim(),
+    dsr_host:         document.getElementById('pm-dsr-host').value.trim(),
+    llm_provider:     document.getElementById('pm-llm-provider').value.trim(),
+    llm_model:        (() => {
+      const sel = document.getElementById('pm-llm-model').value;
+      return (sel === '__custom__' || !sel)
+        ? document.getElementById('pm-llm-model-custom').value.trim()
+        : sel;
+    })(),
+    api_port:         document.getElementById('pm-api-port').value,
+    server_port:      document.getElementById('pm-server-port').value,
+  };
+
+  if (!/^[a-z0-9\-]{1,32}$/.test(body.project_id)) {
+    _pmShowError('Project ID must be lowercase letters, digits, hyphens — max 32 chars.');
+    document.getElementById('pm-save-btn').disabled = false;
+    return;
+  }
+  if (!body.display_name) {
+    _pmShowError('Display name is required.');
+    document.getElementById('pm-save-btn').disabled = false;
+    return;
+  }
+
+  try {
+    const url    = isCreate ? `${API_BASE}/projects` : `${API_BASE}/${pidOrig}/config`;
+    const method = isCreate ? 'POST' : 'PUT';
+    const r = await fetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    const data = await r.json();
+    if (!r.ok) {
+      _pmShowError(data.error || 'Save failed');
+      document.getElementById('pm-save-btn').disabled = false;
+      return;
+    }
+    closeProjectModal();
+    await initSidebar();
+    if (!isCreate && pidOrig === _projectId) loadAll(true);
+  } catch (err) {
+    _pmShowError(err.message);
+    document.getElementById('pm-save-btn').disabled = false;
+  }
+}
+
+function renameProject(pid) {
+  // Reuse the full edit modal; display_name field gets focus
+  openProjectModal(pid);
+}
+
+// ── Delete confirmation ─────────────────────────────────────────────────────
+let _pendingDeletePid = null;
+
+function confirmDeleteProject(pid) {
+  document.querySelectorAll('.proj-dropdown.open').forEach(d => d.classList.remove('open'));
+  _pendingDeletePid = pid;
+  document.getElementById('confirm-msg').textContent =
+    `Delete project "${pid}"? This removes the YAML config file and cannot be undone.`;
+  document.getElementById('confirm-backdrop').style.display = '';
+  document.getElementById('confirm-dialog').style.display = '';
+  document.getElementById('confirm-ok-btn').onclick = executeDeleteProject;
+  setTimeout(() => document.getElementById('confirm-ok-btn').focus(), 50);
+}
+
+function closeConfirm() {
+  document.getElementById('confirm-backdrop').style.display = 'none';
+  document.getElementById('confirm-dialog').style.display = 'none';
+  _pendingDeletePid = null;
+}
+
+async function executeDeleteProject() {
+  if (!_pendingDeletePid) return;
+  const pid = _pendingDeletePid;
+  closeConfirm();
+  try {
+    const r = await fetch(`${API_BASE}/${pid}`, { method: 'DELETE' });
+    if (!r.ok) {
+      const data = await r.json().catch(() => ({}));
+      alert(`Delete failed: ${data.error || r.status}`);
+      return;
+    }
+    // If we deleted the active project, switch to first remaining
+    if (pid === _projectId) {
+      const r2 = await fetch(`${API_BASE}/projects`, { cache: 'no-store' });
+      if (r2.ok) {
+        const projects = await r2.json();
+        if (projects.length) {
+          _projectId = projects[0].id;
+          localStorage.setItem('wb-active-project', _projectId);
+          loadAll(true);
+        }
+      }
+    }
+    await initSidebar();
+  } catch (err) {
+    alert(`Delete error: ${err.message}`);
+  }
+}
+
+// Close modals on Escape
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  closeProjectModal();
+  closeConfirm();
+  document.querySelectorAll('.proj-dropdown.open').forEach(d => d.classList.remove('open'));
+});
+
+// ── Config ─────────────────────────────────────────────────────────────────
+window.WB_CONFIG = {};
+async function loadConfig() {
+  try {
+    const r = await fetch(`${API_BASE}/${_projectId}/config`, { cache: 'no-store' });
+    if (r.ok) {
+      const cfg = await r.json();
+      // Map new config shape to legacy WB_CONFIG keys
+      window.WB_CONFIG = {
+        jira_host:     cfg.jira_host,
+        gh_host:       cfg.gh_host,
+        gh_org:        cfg.gh_org,
+        gh_repo_dev:   cfg.repos?.dev  || 'avi-dev',
+        gh_repo_test:  cfg.repos?.test || 'avi-test',
+        dsr_host:      cfg.dsr_host,
+        workspace_dir: cfg.workspace_dir,
+        workbench_dir: '',   // no longer a web path
+      };
+    }
+  } catch (_) { /* fall back to empty config — rendering uses safe defaults */ }
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+function relativeTime(dateStr) {
+  if (!dateStr) return '';
+  const diff = (Date.now() - new Date(dateStr)) / 1000;
+  if (diff < 60)   return 'just now';
+  if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+  if (diff < 86400)return Math.floor(diff / 3600) + 'h ago';
+  return Math.floor(diff / 86400) + 'd ago';
+}
+
+function typeBadgeClass(type) {
+  const t = (type || '').toLowerCase();
+  if (t === 'bug')   return 'badge-type-bug';
+  if (t === 'task')  return 'badge-type-task';
+  if (t === 'story') return 'badge-type-story';
+  return 'badge-type-default';
+}
+
+function escHtml(s) {
+  return String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Worktrees ──────────────────────────────────────────────────────────────
+function renderWorktrees(data) {
+  const container = document.getElementById('worktree-container');
+  document.getElementById('wt-count').textContent = data.length + ' worktree' + (data.length !== 1 ? 's' : '');
+
+  if (!data.length) {
+    container.innerHTML = '<div class="error-state">No matching worktrees found in ' + escHtml(window.WB_CONFIG.workspace_dir || '~/workspace') + '/.</div>';
+    return;
+  }
+
+  container.innerHTML = '<div class="worktree-grid">' +
+    data.map(w => {
+      const chips = (w.jira_ids || []).map(id =>
+        `<a class="jira-chip" href="jira-detail.html?id=${escHtml(id)}&project=${encodeURIComponent(_projectId)}">${escHtml(id)}</a>`
+      ).join('');
+      const tdBadge = w.has_td_docs
+        ? '<span class="td-docs-badge">td-docs</span>' : '';
+      const commitMsg = (w.last_commit && w.last_commit.message) || '';
+      const commitHash = (w.last_commit && w.last_commit.hash) || '';
+      const commitDate = (w.last_commit && w.last_commit.date) || '';
+
+      return `
+        <div class="worktree-card">
+          <div class="wt-name">${escHtml(w.name)}</div>
+          <div class="wt-branch">${escHtml(w.branch)}</div>
+          <div class="wt-commit">
+            <span class="hash">${escHtml(commitHash)}</span>
+            ${commitMsg ? ' · ' + escHtml(commitMsg.slice(0, 60)) + (commitMsg.length > 60 ? '…' : '') : ''}
+          </div>
+          <div class="wt-footer">
+            <div class="wt-jira-chips">${chips || '<span style="font-size:12px;color:var(--gray-500)">no linked tickets</span>'}</div>
+            ${tdBadge}
+          </div>
+        </div>`;
+    }).join('') + '</div>';
+}
+
+// ── Ticket card ────────────────────────────────────────────────────────────
+function renderTicketCard(ticket, clickable) {
+  const href = clickable ? `jira-detail.html?id=${escHtml(ticket.key)}&project=${encodeURIComponent(_projectId)}` : null;
+  const typeClass = typeBadgeClass(ticket.type);
+  const updated = relativeTime(ticket.updated);
+  const key = escHtml(ticket.key);
+
+  // The drag handle is the body (summary + meta), NOT the heading link.
+  // This gives a large, reliable drop zone without fighting the anchor's
+  // native drag or the onclick threshold on the outer div.
+  return `
+    <div class="ticket-card ${clickable ? 'clickable' : ''}"
+         ${clickable ? `onclick="_cardClick(event,'${href}')"` : ''}>
+      <a class="ticket-key"
+         href="${escHtml(ticket.url || '#')}"
+         draggable="false"
+         onclick="event.stopPropagation()"
+         target="_blank">${key}</a>
+      <div class="ticket-drag-body"
+           draggable="true"
+           data-key="${key}"
+           ondragstart="_dragStart(event)"
+           ondragend="_dragEnd(event)">
+        <div class="ticket-summary">${escHtml(ticket.summary)}</div>
+        <div class="ticket-meta">
+          <span class="badge ${typeClass}">${escHtml(ticket.type || 'ticket')}</span>
+          ${ticket.priority && ticket.priority !== 'None'
+            ? `<span class="badge badge-prio">${escHtml(ticket.priority)}</span>` : ''}
+          ${updated ? `<span class="ticket-updated">${updated}</span>` : ''}
+        </div>
+      </div>
+    </div>`;
+}
+
+// ── Sprint board ───────────────────────────────────────────────────────────
+function renderSprint(data) {
+  const total = (data.todo||[]).length + (data.in_progress||[]).length + (data.done||[]).length;
+  document.getElementById('sprint-count').textContent = total + ' ticket' + (total !== 1 ? 's' : '');
+  document.getElementById('todo-count').textContent = (data.todo||[]).length;
+  document.getElementById('ip-count').textContent   = (data.in_progress||[]).length;
+  document.getElementById('done-count').textContent = (data.done||[]).length;
+
+  function fillCol(id, tickets, clickable) {
+    const el = document.getElementById(id);
+    if (!tickets || !tickets.length) {
+      el.innerHTML = '<div class="empty-col">No tickets</div>';
+      return;
+    }
+    el.innerHTML = tickets.map(t => renderTicketCard(t, clickable)).join('');
+  }
+
+  fillCol('col-todo', data.todo,        false);
+  fillCol('col-ip',   data.in_progress, true);
+  fillCol('col-done', data.done,        true);
+}
+
+// ── Drag-and-drop ──────────────────────────────────────────────────────────
+let _dragKey = null;
+let _dragSourceColId = null;
+let _didDrag = false;   // distinguishes a real drag from a click
+
+// Exposed for Playwright tests — sets the internal drag-state variables.
+function _testSetDragState(key, srcColId) { _dragKey = key; _dragSourceColId = srcColId; }
+
+function _cardClick(e, href) {
+  if (_didDrag) { _didDrag = false; return; }
+  location.href = href;
+}
+
+function _dragStart(e) {
+  const body = e.currentTarget;                          // .ticket-drag-body
+  const card = body.closest('.ticket-card');
+  _dragKey = body.dataset.key;
+  _dragSourceColId = body.closest('.sprint-col-body')?.id || null;
+  _didDrag = false;
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', _dragKey);
+
+  // Use the full card as the drag ghost so the floating preview is complete.
+  // setDragImage must be called synchronously before the dragging class dims it.
+  if (card) {
+    const rect = card.getBoundingClientRect();
+    // Offset = cursor position relative to the card's top-left corner.
+    const offsetX = Math.min(e.clientX - rect.left, rect.width  - 1);
+    const offsetY = Math.min(e.clientY - rect.top,  rect.height - 1);
+    e.dataTransfer.setDragImage(card, offsetX, offsetY);
+  }
+
+  // Dim the in-place card AFTER the ghost is captured.
+  requestAnimationFrame(() => card && card.classList.add('dragging'));
+}
+
+function _dragEnd(e) {
+  const card = e.currentTarget.closest('.ticket-card');
+  if (card) card.classList.remove('dragging');
+  document.querySelectorAll('.sprint-col-body.drag-over')
+    .forEach(c => c.classList.remove('drag-over'));
+  _didDrag = true;
+}
+
+function colDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  e.currentTarget.classList.add('drag-over');
+}
+
+function colDragLeave(e) {
+  if (!e.currentTarget.contains(e.relatedTarget)) {
+    e.currentTarget.classList.remove('drag-over');
+  }
+}
+
+async function colDrop(e) {
+  e.preventDefault();
+  const targetColEl  = e.currentTarget;
+  targetColEl.classList.remove('drag-over');
+
+  const targetColId  = targetColEl.id;
+  const targetStatus = targetColEl.dataset.col;   // "todo" | "in_progress" | "done"
+  const ticketKey    = _dragKey;
+
+  // Same column → no-op, no backend call
+  if (!ticketKey || targetColId === _dragSourceColId) return;
+
+  const body = document.querySelector(`.ticket-drag-body[data-key="${ticketKey}"]`);
+  const card = body ? body.closest('.ticket-card') : null;
+  if (!card) return;
+
+  const origColEl   = document.getElementById(_dragSourceColId);
+  const origNextSib = card.nextElementSibling;   // preserve exact slot for rollback
+
+  // ── 1. OPTIMISTIC: move card to target column immediately ──────────────────
+  targetColEl.appendChild(card);
+  _syncColEmpty(targetColEl);
+  _syncColEmpty(origColEl);
+  _updateSprintCounts();
+
+  document.getElementById('transition-error').style.display = 'none';
+
+  // ── 2. BACKGROUND: call Jira API asynchronously ────────────────────────────
+  try {
+    const r = await fetch(`${API_BASE}/${_projectId}/jobs`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'transition-ticket',
+        params: { ticket_id: ticketKey, target_status: targetStatus },
+      }),
+    });
+    const res = await r.json();
+    if (!r.ok || res.error) {
+      _rollbackCard(card, origColEl, origNextSib, targetColEl);
+      _showTransitionError(`${ticketKey}: ${res.error || 'Script failed'}`);
+      return;
+    }
+    // Poll job to completion (transition is fast — no SSE needed here)
+    const job_id = res.job_id;
+    for (let i = 0; i < 30; i++) {
+      await new Promise(r => setTimeout(r, 1000));
+      const jr = await fetch(`${API_BASE}/${_projectId}/jobs/${job_id}`).then(r => r.json());
+      if (jr.status === 'done') break;
+      if (jr.status === 'failed' || jr.status === 'error') {
+        _rollbackCard(card, origColEl, origNextSib, targetColEl);
+        const msg = (jr.stdout || '').split('\n').find(l => l.startsWith('ERROR')) || 'Script failed';
+        _showTransitionError(`${ticketKey}: ${msg}`);
+        return;
+      }
+    }
+    // On success the card is already where the user put it — nothing else needed.
+  } catch (_) {
+    // ── 3b. ROLLBACK: network/server error ──────────────────────────────────
+    _rollbackCard(card, origColEl, origNextSib, targetColEl);
+    _showTransitionError(`${ticketKey}: server offline — run scripts/start-api.sh`);
+  }
+}
+
+// Move card back to its original position and restore UI state.
+function _rollbackCard(card, origColEl, origNextSib, fromColEl) {
+  if (origNextSib) origColEl.insertBefore(card, origNextSib);
+  else             origColEl.appendChild(card);
+  _syncColEmpty(origColEl);
+  _syncColEmpty(fromColEl);
+  _updateSprintCounts();
+  // Brief red outline signals the rollback to the user.
+  card.style.outline = '2px solid var(--danger)';
+  setTimeout(() => { card.style.outline = ''; }, 1800);
+}
+
+// Add or remove the "No tickets" placeholder for a column.
+function _syncColEmpty(colEl) {
+  if (!colEl) return;
+  const hasCards = colEl.querySelector('.ticket-card');
+  const emptyDiv = colEl.querySelector('.empty-col');
+  if (!hasCards && !emptyDiv) {
+    colEl.insertAdjacentHTML('beforeend', '<div class="empty-col">No tickets</div>');
+  } else if (hasCards && emptyDiv) {
+    emptyDiv.remove();
+  }
+}
+
+// Re-count tickets in each column and update header badges.
+function _updateSprintCounts() {
+  const cols = { 'col-todo': 'todo-count', 'col-ip': 'ip-count', 'col-done': 'done-count' };
+  let total = 0;
+  for (const [id, cntId] of Object.entries(cols)) {
+    const n = document.querySelectorAll(`#${id} .ticket-card`).length;
+    document.getElementById(cntId).textContent = n;
+    total += n;
+  }
+  const sc = document.getElementById('sprint-count');
+  if (sc) sc.textContent = total + ' ticket' + (total !== 1 ? 's' : '');
+}
+
+function _showTransitionError(msg) {
+  const el = document.getElementById('transition-error');
+  el.textContent = 'Status update failed — ' + msg;
+  el.style.display = 'block';
+  setTimeout(() => { el.style.display = 'none'; }, 7000);
+}
+
+// ── Active PRs ─────────────────────────────────────────────────────────────
+
+// Map a DSR/DFR status string to a colour token (passed/failed/running/unknown)
+function psClass(status) {
+  const s = (status || '').toUpperCase().replace(/_/g,' ');
+  if (['PASSED','DONE','SUCCESS','SUCCEEDED','COMPLETED'].includes(s)) return 'passed';
+  if (['FAILED','ERROR','ERRORED'].includes(s))                         return 'failed';
+  if (['ABORTED','CANCELLED','CANCELED'].includes(s))                   return 'failed';
+  if (['RUNNING','IN PROGRESS','PENDING','QUEUED'].includes(s))         return 'running';
+  return 'unknown';
+}
+
+// Single pill for DSR or DFR (used in both right-side header row and expanded body)
+function renderStatusPill(entry, label) {
+  if (!entry) return '';
+  const cls  = psClass(entry.status);
+  const href = entry.url ? `href="${escHtml(entry.url)}" target="_blank"` : '';
+  const tip  = `${label}${entry.status ? ': ' + escHtml(entry.status) : ''}`;
+  return `<a class="pr-status-pill ps-${cls}" ${href} title="${tip}"
+             onclick="event.stopPropagation()">
+    <span class="ps-dot psd-${cls}"></span>${label}
+  </a>`;
+}
+
+// Right-side row of pills: first DSR + first DFR, side by side
+function renderStatusPills(pr) {
+  const d = (pr.dsr || [])[0];
+  const f = (pr.dfr || [])[0];
+  if (!d && !f) return '';
+  return `<div class="pr-status-pills">
+    ${renderStatusPill(d, 'DSR')}
+    ${renderStatusPill(f, 'DFR')}
+  </div>`;
+}
+
+// All DSR + DFR entries for the expanded body (clickable links + status badge)
+function renderDsrLinks(entries, label) {
+  if (!entries || !entries.length) return '';
+  const rows = entries.map(e => {
+    const cls  = psClass(e.status);
+    const href = e.url ? `href="${escHtml(e.url)}" target="_blank"` : '';
+    const idStr = e.id ? `#${e.id}` : '';
+    const statusBadge = e.status
+      ? `<span class="pr-dsr-status ps-${cls}">${escHtml(e.status)}</span>` : '';
+    return `<div class="pr-dsr-entry">
+      <span class="pr-dsr-badge ps-${cls}">${escHtml(label)}</span>
+      ${e.url
+        ? `<a class="pr-dsr-link" ${href} onclick="event.stopPropagation()">${escHtml(idStr || e.url)}</a>`
+        : `<span class="pr-dsr-link" style="color:var(--gray-500)">${escHtml(idStr || 'no link')}</span>`}
+      ${statusBadge}
+    </div>`;
+  }).join('');
+  return rows;
+}
+
+// Reviewer row: green tick for APPROVED, capped at 6 + "+N more" note
+function renderReviewers(reviewers) {
+  if (!reviewers || !reviewers.length) return '';
+  const MAX = 6;
+  const visible  = reviewers.slice(0, MAX);
+  const overflow = reviewers.length - MAX;
+  const rows = visible.map(rv => {
+    const s = (rv.state || '').toUpperCase().replace(/_/g,' ');
+    const approved = s === 'APPROVED';
+    let icon, iconCls, stateLabel;
+    if (approved) {
+      icon = '✓'; iconCls = 'rv-approved'; stateLabel = 'Approved';
+    } else if (s === 'CHANGES REQUESTED') {
+      icon = '✗'; iconCls = 'rv-changes-requested'; stateLabel = 'Changes requested';
+    } else if (s === 'COMMENTED') {
+      icon = '…'; iconCls = 'rv-commented'; stateLabel = 'Commented';
+    } else if (s === 'DISMISSED') {
+      icon = '—'; iconCls = 'rv-dismissed'; stateLabel = 'Dismissed';
+    } else {
+      icon = '○'; iconCls = 'rv-review-requested'; stateLabel = 'Pending';
+    }
+    const nameClass = approved ? 'rv-login rv-approved-name' : 'rv-login';
+    return `<div class="reviewer-row">
+      <span class="rv-icon ${iconCls}">${icon}</span>
+      <span class="${nameClass}">${escHtml(rv.login)}</span>
+      <span class="rv-state">${stateLabel}</span>
+    </div>`;
+  }).join('');
+  const more = overflow > 0
+    ? `<div class="rv-more">+${overflow} more reviewer${overflow > 1 ? 's' : ''}</div>` : '';
+  return rows + more;
+}
+
+function renderPRCard(pr) {
+  const num = pr.number ? `#${pr.number}` : '';
+  const age = relativeTime(pr.updated_at || pr.created_at);
+
+  const statusPills = renderStatusPills(pr);
+
+  const jiraChips = (pr.jira_ids || []).map(id =>
+    `<a class="pr-jira-chip" href="jira-detail.html?id=${escHtml(id)}&project=${encodeURIComponent(_projectId)}"
+        onclick="event.stopPropagation()">${escHtml(id)}</a>`
+  ).join('');
+
+  const allDsrLinks = renderDsrLinks(pr.dsr, 'DSR') + renderDsrLinks(pr.dfr, 'DFR');
+  const reviewersHtml = renderReviewers(pr.reviewers);
+
+  const hasDetails = jiraChips || reviewersHtml || pr.branch || allDsrLinks;
+
+  return `
+  <div class="pr-card" id="pr-card-${pr.number}">
+    <div class="pr-card-header" onclick="togglePRCard(${pr.number})" role="button" tabindex="0"
+         onkeydown="if(event.key==='Enter'||event.key===' ')togglePRCard(${pr.number})">
+      ${hasDetails ? '<span class="pr-chevron">▶</span>' : '<span class="pr-chevron" style="visibility:hidden">▶</span>'}
+      <span class="pr-num">${escHtml(num)}</span>
+      <a class="pr-title" href="${escHtml(pr.url || '#')}" target="_blank"
+         title="${escHtml(pr.title)}"
+         onclick="event.stopPropagation()">${escHtml(pr.title)}</a>
+      <div class="pr-meta-right">
+        ${statusPills}
+        ${age ? `<span class="pr-age">${age}</span>` : ''}
+      </div>
+    </div>
+    ${hasDetails ? `
+    <div class="pr-card-body">
+      ${pr.branch ? `<div class="pr-branch">${escHtml(pr.branch)}${pr.base ? ' → ' + escHtml(pr.base) : ''}</div>` : ''}
+      ${jiraChips ? `
+      <div class="pr-body-section">
+        <div class="pr-body-label">Jira</div>
+        <div class="pr-jira-chips">${jiraChips}</div>
+      </div>` : ''}
+      ${allDsrLinks ? `
+      <div class="pr-body-section">
+        <div class="pr-body-label">DSR / DFR</div>
+        <div class="pr-dsr-list">${allDsrLinks}</div>
+      </div>` : ''}
+      ${reviewersHtml ? `
+      <div class="pr-body-section">
+        <div class="pr-body-label">Reviewers</div>
+        <div class="reviewer-list">${reviewersHtml}</div>
+      </div>` : ''}
+    </div>` : ''}
+  </div>`;
+}
+
+function togglePRCard(num) {
+  const card = document.getElementById('pr-card-' + num);
+  if (card) card.classList.toggle('expanded');
+}
+
+function renderPRSubsection(prs, emptyMsg) {
+  if (!prs || !prs.length) {
+    return `<div class="pr-subsection-empty">${emptyMsg}</div>`;
+  }
+  return '<div class="pr-list">' + prs.map(renderPRCard).join('') + '</div>';
+}
+
+function renderPRs(data) {
+  const container  = document.getElementById('pr-container');
+  const devPRs     = data.avi_dev  || data.prs || [];
+  const testPRs    = data.avi_test || [];
+  const total      = devPRs.length + testPRs.length;
+  const repoDev    = (window.WB_CONFIG.gh_repo_dev  || 'avi-dev');
+  const repoTest   = (window.WB_CONFIG.gh_repo_test || 'avi-test');
+  document.getElementById('pr-count').textContent = total + ' PR' + (total !== 1 ? 's' : '');
+
+  container.innerHTML = `
+    <div class="pr-subsection">
+      <div class="pr-subsection-header">
+        <span class="pr-subsection-title">${escHtml(repoDev)}</span>
+        <span class="pr-subsection-count">${devPRs.length}</span>
+      </div>
+      ${renderPRSubsection(devPRs, 'No active PRs in ' + escHtml(repoDev) + '.')}
+    </div>
+    <div class="pr-subsection" style="margin-top:var(--sp-5)">
+      <div class="pr-subsection-header">
+        <span class="pr-subsection-title">${escHtml(repoTest)}</span>
+        <span class="pr-subsection-count">${testPRs.length}</span>
+      </div>
+      ${renderPRSubsection(testPRs, 'No active PRs in ' + escHtml(repoTest) + '.')}
+    </div>`;
+}
+
+// ── Load data ──────────────────────────────────────────────────────────────
+async function loadAll(skipConfig) {
+  if (!skipConfig) await loadConfig();
+  try {
+    const [metaRes, wtRes, sprintRes, prRes] = await Promise.all([
+      fetch(dataUrl('meta'),     { cache: 'no-store' }),
+      fetch(dataUrl('worktrees'),{ cache: 'no-store' }),
+      fetch(dataUrl('sprint'),   { cache: 'no-store' }),
+      fetch(dataUrl('prs'),      { cache: 'no-store' }),
+    ]);
+
+    if (metaRes.ok) {
+      const meta = await metaRes.json();
+      const updated = new Date(meta.last_updated);
+      document.getElementById('last-updated').textContent =
+        'Last updated ' + relativeTime(meta.last_updated) +
+        ' (' + updated.toLocaleTimeString() + ')';
+    }
+
+    if (wtRes.ok) {
+      renderWorktrees(await wtRes.json());
+    } else {
+      document.getElementById('worktree-container').innerHTML =
+        '<div class="error-state">Could not load worktrees.json. Run update-all.sh first.</div>';
+    }
+
+    if (prRes.ok) {
+      renderPRs(await prRes.json());
+    } else {
+      document.getElementById('pr-container').innerHTML =
+        '<div class="error-state">Could not load prs.json. Run update-all.sh first.</div>';
+    }
+
+    if (sprintRes.ok) {
+      renderSprint(await sprintRes.json());
+    } else {
+      ['col-todo','col-ip','col-done'].forEach(id => {
+        document.getElementById(id).innerHTML =
+          '<div class="error-state">Could not load sprint.json. Run update-all.sh first.</div>';
+      });
+    }
+  } catch (e) {
+    document.getElementById('worktree-container').innerHTML =
+      `<div class="error-state">Load error: ${escHtml(e.message)}</div>`;
+  }
+}
+
+// ── Dark mode ──────────────────────────────────────────────────────────────
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  const btn = document.getElementById('btn-theme');
+  if (btn) btn.textContent = theme === 'dark' ? '☾' : '☀';
+}
+function toggleTheme() {
+  const cur  = document.documentElement.getAttribute('data-theme') || 'light';
+  const next = cur === 'dark' ? 'light' : 'dark';
+  localStorage.setItem('wb-theme', next);
+  applyTheme(next);
+}
+applyTheme(localStorage.getItem('wb-theme') || 'light');
+
+// Re-apply on bfcache restore (browser back/forward)
+window.addEventListener('pageshow', () =>
+  applyTheme(localStorage.getItem('wb-theme') || 'light'));
+
+// Sync if another page changes the theme while this one is open
+window.addEventListener('storage', e => {
+  if (e.key === 'wb-theme') applyTheme(e.newValue || 'light');
+});
+
+// ── Refresh button ─────────────────────────────────────────────────────────
+async function refreshData() {
+  const btn    = document.getElementById('btn-refresh');
+  const status = document.getElementById('refresh-status');
+  btn.classList.add('loading');
+  btn.textContent = '↻ Refreshing…';
+  status.textContent = 'Running scripts…';
+
+  try {
+    const trigRes = await fetch(`${API_BASE}/${_projectId}/jobs`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'update-all' }),
+    });
+    if (!trigRes.ok) throw new Error(`HTTP ${trigRes.status}`);
+    const { job_id } = await trigRes.json();
+
+    // Stream progress via SSE
+    await new Promise((resolve, reject) => {
+      const es = new EventSource(`${API_BASE}/${_projectId}/jobs/stream/${job_id}`);
+      es.addEventListener('log', e => {
+        const line = JSON.parse(e.data).line;
+        if (line) status.textContent = line.slice(-80);
+      });
+      es.addEventListener('status', e => {
+        es.close();
+        const { status: s } = JSON.parse(e.data);
+        s === 'done' ? resolve() : reject(new Error(s));
+      });
+      es.addEventListener('error', () => { es.close(); reject(new Error('stream error')); });
+      setTimeout(() => { es.close(); reject(new Error('timeout')); }, 300_000);
+    });
+
+    btn.classList.remove('loading');
+    btn.textContent = '↻ Refresh';
+    status.textContent = '✓ Done';
+    loadAll(true);
+    setTimeout(() => { status.textContent = ''; }, 3000);
+
+  } catch (err) {
+    btn.classList.remove('loading');
+    btn.textContent = '↻ Refresh';
+    status.textContent = err.message.includes('fetch') || err.message.includes('HTTP')
+      ? 'Server offline — run: bash scripts/start-api.sh'
+      : `✗ Failed: ${err.message}`;
+    setTimeout(() => { status.textContent = ''; }, 8000);
+  }
+}
+
+initSidebarCollapse();
+initSidebar().then(() => loadAll());
+</script>
+</div><!-- .main-content -->
+</body>
+</html>

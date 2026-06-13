@@ -1,0 +1,16 @@
+# Local config — copy config.sample.json → config.json and edit for your environment
+config.json
+
+# Runtime-generated data files
+data/*.json
+data/jira/
+data/*.log
+
+# Python cache
+__pycache__/
+
+# Compiled Go binary
+server/workbench-server
+
+# Duplicate / nested workbench directory
+workbench/
