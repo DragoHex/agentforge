@@ -6,10 +6,9 @@
 
 set -euo pipefail
 
-source "$(dirname "${BASH_SOURCE[0]}")/load-config.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/load-config.sh" "${PROJECT_ID:-}"
 
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-DATA_DIR="$SCRIPT_DIR/../data"
+DATA_DIR="$WORKBENCH_DATA_DIR"
 TARGET_REMOTE="$AVI_DEV_REMOTE"
 GH_TOKEN=$(grep -A5 "${GH_HOST}:" "$HOME/.config/gh/hosts.yml" 2>/dev/null \
     | grep oauth_token | head -1 | awk '{print $2}' || echo "")
@@ -200,16 +199,17 @@ PYEOF
     echo '{"number":"","title":"","state":"","url":"","merged_at":"","body":""}' \
         > "$TMPDIR_TICKET/pr.json"
     if [[ -n "$BRANCH" && -n "$GH_TOKEN" ]]; then
-        PR_RESP=$(curl -sf \
+        curl -sf \
             -H "Authorization: token $GH_TOKEN" \
             "https://${GH_HOST}/api/v3/repos/${GH_ORG}/${GH_REPO_DEV}/pulls?state=all&head=${GH_ORG}:${BRANCH}&per_page=5" \
-            2>/dev/null || echo "[]")
-        python3 - "$PR_RESP" "$TMPDIR_TICKET/pr.json" <<'PYEOF'
+            2>/dev/null > "$TMPDIR_TICKET/pr_raw.json" || echo "[]" > "$TMPDIR_TICKET/pr_raw.json"
+        python3 - "$TMPDIR_TICKET/pr_raw.json" "$TMPDIR_TICKET/pr.json" <<'PYEOF'
 import json, sys
-resp_str = sys.argv[1]
-out_file = sys.argv[2]
+resp_file = sys.argv[1]
+out_file  = sys.argv[2]
 try:
-    data = json.loads(resp_str)
+    with open(resp_file) as f:
+        data = json.load(f)
     if isinstance(data, list) and len(data) > 0:
         p = data[0]
         result = {
@@ -254,17 +254,18 @@ PYEOF
     # ── 4. DSR / DFR status ────────────────────────────────────────────────────
     echo "[]" > "$TMPDIR_TICKET/dsr.json"
     if [[ -n "$BRANCH" ]]; then
-        RAW_DSR=$(dsr list --count 50 --duration 30 2>/dev/null || echo "[]")
-        python3 - "$RAW_DSR" "$BRANCH" "$JIRA_ID" "$TMPDIR_TICKET/dsr.json" <<'PYEOF'
+        dsr list --count 50 --duration 30 2>/dev/null > "$TMPDIR_TICKET/dsr_raw.json" || echo "[]" > "$TMPDIR_TICKET/dsr_raw.json"
+        python3 - "$TMPDIR_TICKET/dsr_raw.json" "$BRANCH" "$JIRA_ID" "$TMPDIR_TICKET/dsr.json" <<'PYEOF'
 import json, sys, subprocess
 
-raw_str  = sys.argv[1]
+raw_file = sys.argv[1]
 branch   = sys.argv[2]
 jira_id  = sys.argv[3]
 out_file = sys.argv[4]
 
 try:
-    runs = json.loads(raw_str)
+    with open(raw_file) as f:
+        runs = json.load(f)
 except:
     runs = []
 
