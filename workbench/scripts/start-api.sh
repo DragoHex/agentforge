@@ -1,10 +1,13 @@
 #!/usr/bin/env bash
 # start-api.sh
-# Starts (or restarts) the Workbench API server on port 8081.
+# Starts (or restarts) the Workbench API server.
 
+source "$(dirname "${BASH_SOURCE[0]}")/load-config.sh"
+
+# WORKBENCH_DIR and API_PORT come from config.json via load-config.sh.
 PIDFILE="/tmp/workbench-api.pid"
-LOGFILE="/var/www/html/workbench/data/api.log"
-API_PY="/var/www/html/workbench/api.py"
+LOGFILE="$WORKBENCH_DIR/data/api.log"
+API_PY="$WORKBENCH_DIR/api.py"
 
 # Kill existing instance if running
 if [[ -f "$PIDFILE" ]]; then
@@ -23,7 +26,7 @@ echo $! > "$PIDFILE"
 sleep 0.5
 
 if kill -0 "$(cat "$PIDFILE")" 2>/dev/null; then
-    echo "API server running (PID $(cat "$PIDFILE")) → http://127.0.0.1:8081"
+    echo "API server running (PID $(cat "$PIDFILE")) → http://127.0.0.1:${API_PORT}"
     echo "Log: $LOGFILE"
 else
     echo "ERROR: API server failed to start. Check $LOGFILE"

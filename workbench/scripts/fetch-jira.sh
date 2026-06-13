@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 # fetch-jira.sh
 # Fetches active sprint tickets and groups them by status category.
-# Outputs: /var/www/html/workbench/data/sprint.json
 
 set -euo pipefail
+
+source "$(dirname "${BASH_SOURCE[0]}")/load-config.sh"
 
 OUT_DIR="$(dirname "$0")/../data"
 OUT_FILE="$OUT_DIR/sprint.json"
@@ -15,12 +16,13 @@ TMPFILE=$(mktemp /tmp/sprint_XXXXXX.json)
 jira sprint --output json --export "$TMPFILE" >/dev/null 2>&1 || { echo "ERROR: jira sprint failed"; exit 1; }
 [[ -s "$TMPFILE" ]] || { echo "ERROR: jira sprint returned empty output"; exit 1; }
 
-python3 - <<PYEOF "$TMPFILE" "$OUT_FILE"
+python3 - <<PYEOF "$TMPFILE" "$OUT_FILE" "$JIRA_HOST"
 import json, sys, re
 from datetime import datetime, timezone
 
-raw_file = sys.argv[1]
-out_file = sys.argv[2]
+raw_file  = sys.argv[1]
+out_file  = sys.argv[2]
+jira_host = sys.argv[3]
 
 with open(raw_file) as f:
     data = json.load(f)
@@ -49,7 +51,7 @@ for issue in issues:
         "assignee": fields.get("assignee", {}).get("displayName", "") if fields.get("assignee") else "",
         "updated":  fields.get("updated", ""),
         "created":  fields.get("created", ""),
-        "url":      f"https://vmw-jira.broadcom.net/browse/{issue['key']}",
+        "url":      f"{jira_host}/browse/{issue['key']}",
     }
 
     if cat_key in ("done", "new") and status_name in ("open",):

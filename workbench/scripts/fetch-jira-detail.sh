@@ -1,17 +1,16 @@
 #!/usr/bin/env bash
 # fetch-jira-detail.sh <AV-ID> [--worktree <name>] | --all
 # Fetches per-ticket detail: td-docs content, GitHub PR status, DSR/DFR status.
-# Outputs: /var/www/html/workbench/data/jira/<AV-ID>.json
 #
 # --worktree <name>  Override auto-detection; use this worktree name from ~/workspace/
 
 set -euo pipefail
 
+source "$(dirname "${BASH_SOURCE[0]}")/load-config.sh"
+
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 DATA_DIR="$SCRIPT_DIR/../data"
-WORKSPACE="$HOME/workspace"
-TARGET_REMOTE="git@github-vcf.devops.broadcom.net:ANS/avi-dev.git"
-GH_HOST="github-vcf.devops.broadcom.net"
+TARGET_REMOTE="$AVI_DEV_REMOTE"
 GH_TOKEN=$(grep -A5 "${GH_HOST}:" "$HOME/.config/gh/hosts.yml" 2>/dev/null \
     | grep oauth_token | head -1 | awk '{print $2}' || echo "")
 
@@ -58,7 +57,7 @@ process_ticket() {
             [[ "$remote" == "$TARGET_REMOTE" ]] || continue
             b=$(git -C "$dir" branch --show-current 2>/dev/null || echo "")
             wt_n=$(basename "$dir")
-            td_file="$HOME/.dev-work/td-docs/$wt_n/${JIRA_ID}.md"
+            td_file="$TD_DOCS_BASE/$wt_n/${JIRA_ID}.md"
             if echo "$b" | grep -qiE "${JIRA_ID}" || [[ -f "$td_file" ]]; then
                 WORKTREE_PATH="$dir"
                 WORKTREE_NAME=$(basename "$dir")
@@ -72,7 +71,7 @@ process_ticket() {
     # Canonical location : ~/.dev-work/td-docs/<worktree>/<jira_id>.md
     # Symlink location   : <worktree>/.cursor/td-docs/<jira_id>.md -> canonical
     if [[ -n "$WORKTREE_PATH" ]]; then
-        _canonical_dir="$HOME/.dev-work/td-docs/$WORKTREE_NAME"
+        _canonical_dir="$TD_DOCS_BASE/$WORKTREE_NAME"
         _canonical="$_canonical_dir/${JIRA_ID}.md"
         _link_dir="$WORKTREE_PATH/.cursor/td-docs"
         _link="$_link_dir/${JIRA_ID}.md"
@@ -169,7 +168,7 @@ TDTEMPLATE
     TD_DOCS_EXISTS="false"
     if [[ -n "$WORKTREE_PATH" ]]; then
         # Read from canonical path directly (symlink also works via [[ -f ]])
-        cand="$HOME/.dev-work/td-docs/$WORKTREE_NAME/${JIRA_ID}.md"
+        cand="$TD_DOCS_BASE/$WORKTREE_NAME/${JIRA_ID}.md"
         if [[ -f "$cand" ]]; then
             TD_DOCS_PATH="$cand"
             TD_DOCS_EXISTS="true"
@@ -203,7 +202,7 @@ PYEOF
     if [[ -n "$BRANCH" && -n "$GH_TOKEN" ]]; then
         PR_RESP=$(curl -sf \
             -H "Authorization: token $GH_TOKEN" \
-            "https://${GH_HOST}/api/v3/repos/ANS/avi-dev/pulls?state=all&head=ANS:${BRANCH}&per_page=5" \
+            "https://${GH_HOST}/api/v3/repos/${GH_ORG}/${GH_REPO_DEV}/pulls?state=all&head=${GH_ORG}:${BRANCH}&per_page=5" \
             2>/dev/null || echo "[]")
         python3 - "$PR_RESP" "$TMPDIR_TICKET/pr.json" <<'PYEOF'
 import json, sys
@@ -236,14 +235,16 @@ PYEOF
             --format="%s" 2>/dev/null | grep -E "${JIRA_ID}" | \
             grep -oE '#[0-9]+' | head -1 | tr -d '#' || echo "")
         if [[ -n "$GIT_PR" ]]; then
-            python3 - "$GIT_PR" "$TMPDIR_TICKET/pr.json" "$BRANCH" "$GH_HOST" <<'PYEOF'
+            python3 - "$GIT_PR" "$TMPDIR_TICKET/pr.json" "$BRANCH" "$GH_HOST" "$GH_ORG" "$GH_REPO_DEV" <<'PYEOF'
 import json, sys
-num   = sys.argv[1]
-fpath = sys.argv[2]
-branch= sys.argv[3]
-host  = sys.argv[4]
+num      = sys.argv[1]
+fpath    = sys.argv[2]
+branch   = sys.argv[3]
+host     = sys.argv[4]
+org      = sys.argv[5]
+repo_dev = sys.argv[6]
 result = {'number': num, 'title': '', 'state': 'unknown', 'merged_at': '',
-          'url': f'https://{host}/ANS/avi-dev/pull/{num}', 'body': ''}
+          'url': f'https://{host}/{org}/{repo_dev}/pull/{num}', 'body': ''}
 with open(fpath, 'w') as f:
     json.dump(result, f)
 PYEOF
@@ -306,10 +307,11 @@ PYEOF
     JIRA_TMPFILE=$(mktemp /tmp/jira_XXXXXX.json)
     echo "{}" > "$TMPDIR_TICKET/jira.json"
     if jira fetch --ids "$JIRA_ID" --output json --export "$JIRA_TMPFILE" >/dev/null 2>&1 && [[ -s "$JIRA_TMPFILE" ]]; then
-        python3 - "$JIRA_TMPFILE" "$TMPDIR_TICKET/jira.json" <<'PYEOF'
+        python3 - "$JIRA_TMPFILE" "$TMPDIR_TICKET/jira.json" "$JIRA_HOST" <<'PYEOF'
 import json, sys
-data   = json.load(open(sys.argv[1]))
-issues = data.get('issues', [])
+data      = json.load(open(sys.argv[1]))
+jira_host = sys.argv[3]
+issues    = data.get('issues', [])
 if issues:
     i = issues[0]
     f = i['fields']
@@ -320,7 +322,7 @@ if issues:
         'type':        f.get('issuetype', {}).get('name', ''),
         'assignee':    (f.get('assignee') or {}).get('displayName', ''),
         'description': (f.get('description') or '')[:3000],
-        'url':         f'https://vmw-jira.broadcom.net/browse/{i["key"]}',
+        'url':         f'{jira_host}/browse/{i["key"]}',
         'labels':      f.get('labels', []),
         'priority':    f.get('priority', {}).get('name', ''),
     }

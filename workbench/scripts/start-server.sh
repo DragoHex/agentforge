@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
-# start-server.sh — build and start the workbench Go server on port 1337.
+# start-server.sh — build and start the workbench Go server.
 
 set -euo pipefail
 
-# Always use the Apache-served canonical location so the server writes
+source "$(dirname "${BASH_SOURCE[0]}")/load-config.sh"
+
+# WORKBENCH_DIR and SERVER_PORT come from config.json via load-config.sh.
+# The server always uses the Apache-served canonical location so it writes
 # to the same directory that the browser fetches data from.
-WORKBENCH_DIR="/var/www/html/workbench"
 SERVER_DIR="$WORKBENCH_DIR/server"
 BINARY="$SERVER_DIR/workbench-server"
 PIDFILE="/tmp/workbench-server.pid"
@@ -30,13 +32,13 @@ go build -o "$BINARY" .
 mkdir -p "$WORKBENCH_DIR/data"
 
 # Start
-echo "Starting workbench server on port 1337..."
+echo "Starting workbench server on port ${SERVER_PORT}..."
 nohup "$BINARY" >> "$LOGFILE" 2>&1 &
 echo $! > "$PIDFILE"
 sleep 0.5
 
 if kill -0 "$(cat "$PIDFILE")" 2>/dev/null; then
-    echo "Server running (PID $(cat "$PIDFILE")) → http://127.0.0.1:1337"
+    echo "Server running (PID $(cat "$PIDFILE")) → http://127.0.0.1:${SERVER_PORT}"
     echo "Log: $LOGFILE"
 else
     echo "ERROR: Server failed to start. Check $LOGFILE"

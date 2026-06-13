@@ -321,6 +321,16 @@
 </div>
 
 <script>
+// ── Config ─────────────────────────────────────────────────────────────────
+window.WB_CONFIG = {};
+async function loadConfig() {
+  try {
+    const BASE = window.location.pathname.replace(/\/[^/]*$/, '');
+    const r = await fetch(BASE + '/config.json', { cache: 'no-store' });
+    if (r.ok) window.WB_CONFIG = await r.json();
+  } catch (_) { /* fall back to empty defaults */ }
+}
+
 // ── Tab switching ──────────────────────────────────────────────────────────
 document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -623,7 +633,8 @@ function renderStatus(data) {
         <div class="dsr-run">
           <div class="dsr-run-header">
             <span class="dsr-id">
-              <a href="https://dsr.avilb.broadcom.net" target="_blank" rel="noreferrer"
+              <a href="${escHtml((window.WB_CONFIG.dsr_host ? window.WB_CONFIG.dsr_host + '/requests/' + (r.Request_ID||'') : '#'))}"
+                 target="_blank" rel="noreferrer"
                  style="color:inherit;text-decoration:none">#${escHtml(String(r.Request_ID||''))}</a>
             </span>
             <span class="run-status-badge ${dsrStatusClass(r.Status)}">${escHtml(r.Status||'?')}</span>
@@ -816,7 +827,8 @@ async function fetchWithWorktree() {
   } catch (e) {
     bar.style.display = 'none';
     status.className = 'fetch-status failed';
-    status.textContent = 'Server offline — run: bash /var/www/html/workbench/scripts/start-server.sh';
+    const wbDir = (window.WB_CONFIG.workbench_dir || '/var/www/html/workbench');
+    status.textContent = 'Server offline — run: bash ' + wbDir + '/scripts/start-server.sh';
   } finally {
     btn.disabled = false;
     btn.textContent = '↻ Fetch Data';
@@ -857,7 +869,7 @@ async function loadData(jiraId) {
       <strong>Could not load data for ${escHtml(jiraId)}</strong><br>
       ${escHtml(e.message)}<br><br>
       Select a worktree above and click <strong>Fetch Data</strong>, or run:<br>
-      <code>bash /var/www/html/workbench/scripts/fetch-jira-detail.sh ${escHtml(jiraId)}</code>
+      <code>bash ${escHtml((window.WB_CONFIG.workbench_dir||'/var/www/html/workbench'))}/scripts/fetch-jira-detail.sh ${escHtml(jiraId)}</code>
     </div>`;
     ['approaches-content','impl-plan-content','pr-annot-content','status-content'].forEach(id => {
       document.getElementById(id).innerHTML = msg;
@@ -867,6 +879,9 @@ async function loadData(jiraId) {
 
 // ── Bootstrap ──────────────────────────────────────────────────────────────
 async function init() {
+  // Load config before rendering so DSR links and hint paths are correct.
+  await loadConfig();
+
   const params = new URLSearchParams(window.location.search);
   const jiraId = params.get('id') || '';
 

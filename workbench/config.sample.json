@@ -1,0 +1,14 @@
+{
+  "_comment": "Copy this file to config.json and fill in values for your environment. config.json is gitignored.",
+  "jira_host":     "https://your-jira.example.com",
+  "gh_host":       "your-github-enterprise.example.com",
+  "gh_org":        "YOUR_ORG",
+  "gh_repo_dev":   "your-dev-repo",
+  "gh_repo_test":  "your-test-repo",
+  "dsr_host":      "https://your-dsr.example.com",
+  "workspace_dir": "~/workspace",
+  "td_docs_base":  "~/.dev-work/td-docs",
+  "workbench_dir": "/var/www/html/workbench",
+  "server_port":   1337,
+  "api_port":      8081
+}

@@ -14,7 +14,8 @@
     --font-sans:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
     --font-mono:ui-monospace,"SF Mono","Cascadia Code",Menlo,monospace;
     --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px; --sp-5:24px;
-    --sp-6:32px; --r-xs:4px; --r-sm:8px; --r-md:12px; --r-lg:20px;
+    --sp-6:32px; --sp-7:44px; --sp-8:60px;
+    --r-xs:4px; --r-sm:8px; --r-md:12px; --r-lg:20px;
     --shadow-sm:0 1px 2px rgba(0,0,0,.06); --shadow-md:0 4px 10px rgba(0,0,0,.08);
   }
   /* ── Dark mode overrides ── */
@@ -50,7 +51,7 @@
   .btn-theme:hover{background:var(--gray-150);transform:rotate(20deg)}
 
   /* ── Section headings ── */
-  .section{margin-bottom:var(--sp-7)}
+  .section{margin-bottom:var(--sp-8)}
   .section-header{display:flex;align-items:baseline;gap:var(--sp-3);
                   margin-bottom:var(--sp-4);padding-bottom:var(--sp-2);
                   border-bottom:2px solid var(--gray-300)}
@@ -147,11 +148,122 @@
                padding:var(--sp-4);color:var(--danger);font-size:14px}
   .empty-col{text-align:center;padding:var(--sp-5);color:var(--gray-500);font-size:13px}
 
+  /* ── Active PRs ── */
+  .pr-subsection{}
+  .pr-subsection-header{display:flex;align-items:center;gap:var(--sp-2);
+                         margin-bottom:var(--sp-3)}
+  .pr-subsection-title{font:500 14px var(--font-sans);color:var(--gray-700);
+                        text-transform:uppercase;letter-spacing:.05em}
+  .pr-subsection-count{font:500 11px var(--font-mono);padding:1px 8px;
+                        border-radius:10px;background:var(--gray-150);color:var(--gray-500)}
+  .pr-subsection-empty{font:13px var(--font-sans);color:var(--gray-500);
+                        padding:var(--sp-3) 0}
+  .pr-list{display:flex;flex-direction:column;gap:var(--sp-2)}
+  .pr-card{background:var(--white);border:1px solid var(--gray-300);
+           border-radius:var(--r-md);overflow:hidden;
+           box-shadow:var(--shadow-sm);transition:box-shadow .15s}
+  .pr-card:hover{box-shadow:var(--shadow-md)}
+  .pr-card-header{display:flex;align-items:center;gap:var(--sp-3);
+                  padding:var(--sp-3) var(--sp-4);cursor:pointer;
+                  user-select:none;min-height:52px}
+  .pr-card-header:hover{background:var(--gray-150)}
+  .pr-chevron{font-size:10px;color:var(--gray-500);flex-shrink:0;
+              transition:transform .2s;line-height:1}
+  .pr-card.expanded .pr-chevron{transform:rotate(90deg)}
+  .pr-repo-badge{font:500 10px var(--font-mono);padding:2px 7px;
+                 border-radius:var(--r-xs);white-space:nowrap;flex-shrink:0}
+  .repo-avi-dev {background:rgba(92,124,163,.15);color:var(--info)}
+  .repo-avi-test{background:rgba(120,140,93,.15);color:var(--olive)}
+  .pr-num{font:500 12px var(--font-mono);color:var(--gray-500);flex-shrink:0}
+  .pr-title{font:500 14px/1.35 var(--font-sans);color:var(--slate);
+            flex:1;min-width:0;
+            white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pr-meta-right{display:flex;align-items:center;gap:var(--sp-2);
+                 flex-shrink:0;margin-left:auto}
+  .pr-age{font:12px var(--font-mono);color:var(--gray-500);white-space:nowrap}
+  /* ── DSR / DFR: right-side status pills (row, next to age) ── */
+  .pr-status-pills{display:flex;flex-direction:row;align-items:center;gap:4px;flex-shrink:0}
+  .pr-status-pill{display:inline-flex;align-items:center;gap:3px;
+                  font:600 9px var(--font-mono);padding:2px 7px;
+                  border-radius:20px;white-space:nowrap;text-decoration:none;
+                  cursor:pointer;transition:filter .15s}
+  .pr-status-pill:hover{filter:brightness(.88)}
+  /* status colour tokens – green / red / yellow / grey */
+  .ps-passed {background:rgba(74,164,94,.18);color:#2d6b3a;border:1px solid rgba(74,164,94,.35)}
+  .ps-failed {background:rgba(176,74,74,.15);color:#8b2a2a;border:1px solid rgba(176,74,74,.3)}
+  .ps-running{background:rgba(199,142,63,.18);color:#7a4e10;border:1px solid rgba(199,142,63,.35)}
+  .ps-unknown{background:var(--gray-150);color:var(--gray-500);border:1px solid var(--gray-300)}
+  .ps-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+  .psd-passed {background:#2d8a45}
+  .psd-failed {background:var(--danger)}
+  .psd-running{background:var(--warning)}
+  .psd-unknown{background:var(--gray-500)}
+
+  /* ── DSR / DFR: inline indicators (right meta area, legacy) ── */
+  .pr-indicators{display:flex;align-items:center;gap:5px}
+  .pr-indicator{display:inline-flex;align-items:center;gap:3px;
+                font:500 10px var(--font-sans);padding:2px 7px;
+                border-radius:var(--r-xs);white-space:nowrap;
+                text-decoration:none;cursor:pointer}
+  .pr-indicator:hover{filter:brightness(0.9)}
+  .ind-passed  {background:rgba(120,140,93,.18);color:#4A5E35}
+  .ind-failed  {background:rgba(176,74,74,.15);color:var(--danger)}
+  .ind-aborted {background:rgba(199,142,63,.18);color:#7A5010}
+  .ind-running {background:rgba(92,124,163,.15);color:var(--info)}
+  .ind-unknown {background:var(--gray-150);color:var(--gray-500)}
+  .ind-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+  .dot-passed {background:#4A5E35}
+  .dot-failed {background:var(--danger)}
+  .dot-aborted{background:var(--warning)}
+  .dot-running{background:var(--info)}
+  .dot-unknown{background:var(--gray-500)}
+
+  /* ── Expanded DSR / DFR link list ── */
+  .pr-dsr-list{display:flex;flex-direction:column;gap:5px;margin-top:var(--sp-1)}
+  .pr-dsr-entry{display:flex;align-items:center;gap:var(--sp-2);font:12px var(--font-sans)}
+  .pr-dsr-badge{font:600 9px var(--font-mono);padding:1px 6px;border-radius:10px;
+                white-space:nowrap;flex-shrink:0}
+  .pr-dsr-link{color:var(--info);text-decoration:none;font:12px var(--font-mono);
+               overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0}
+  .pr-dsr-link:hover{text-decoration:underline}
+  .pr-dsr-status{font:500 10px var(--font-sans);padding:1px 6px;border-radius:20px;
+                 flex-shrink:0;white-space:nowrap}
+  /* Expanded body */
+  .pr-card-body{display:none;padding:0 var(--sp-4) var(--sp-4);
+                border-top:1px solid var(--gray-150)}
+  .pr-card.expanded .pr-card-body{display:block}
+  .pr-body-section{margin-top:var(--sp-3)}
+  .pr-body-label{font:500 11px var(--font-sans);color:var(--gray-500);
+                 text-transform:uppercase;letter-spacing:.05em;margin-bottom:var(--sp-2)}
+  .pr-jira-chips{display:flex;flex-wrap:wrap;gap:4px}
+  .pr-jira-chip{font:500 11px var(--font-mono);padding:2px 7px;
+                border-radius:var(--r-xs);background:var(--info);color:var(--white);
+                text-decoration:none}
+  .pr-jira-chip:hover{background:var(--slate);color:var(--white)}
+  .pr-branch{font:12px var(--font-mono);color:var(--clay);margin-top:var(--sp-1);
+             white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  /* Reviewers */
+  .reviewer-list{display:flex;flex-direction:column;gap:var(--sp-1);margin-top:var(--sp-2)}
+  .reviewer-row{display:flex;align-items:center;gap:var(--sp-2);font:13px var(--font-sans)}
+  .rv-icon{width:18px;height:18px;border-radius:50%;display:flex;align-items:center;
+           justify-content:center;font-size:9px;font-weight:700;flex-shrink:0}
+  .rv-approved          {background:rgba(45,138,69,.18);color:#1d6b33;font-weight:700}
+  .rv-changes-requested {background:rgba(176,74,74,.2);color:var(--danger)}
+  .rv-review-requested  {background:var(--gray-150);color:var(--gray-500)}
+  .rv-commented         {background:rgba(92,124,163,.15);color:var(--info)}
+  .rv-dismissed         {background:var(--gray-150);color:var(--gray-500)}
+  .rv-login{color:var(--slate);font-weight:500}
+  .rv-login.rv-approved-name{color:#1d6b33;font-weight:600}
+  .rv-state{font:11px var(--font-sans);color:var(--gray-500);text-transform:capitalize}
+  .rv-more{font:11px var(--font-sans);color:var(--gray-500);
+           padding:var(--sp-1) 0;font-style:italic}
+
   /* ── Responsive ── */
   @media(max-width:768px){
     .sprint-board{grid-template-columns:1fr}
     .worktree-grid{grid-template-columns:1fr}
     .header{flex-direction:column;align-items:flex-start;gap:var(--sp-3)}
+    .pr-title{white-space:normal}
   }
 </style>
 </head>
@@ -187,7 +299,7 @@
 </div>
 
 <!-- ── Sprint Board ───────────────────────────────────────────────────────── -->
-<div class="section" style="margin-top:var(--sp-7)">
+<div class="section" style="margin-top:var(--sp-8)">
   <div class="section-header">
     <div class="section-title">Active Sprint</div>
     <span class="section-count" id="sprint-count">—</span>
@@ -236,9 +348,33 @@
   </div>
 </div>
 
+<!-- ── Active PRs ────────────────────────────────────────────────────────── -->
+<div class="section" style="margin-top:var(--sp-8)">
+  <div class="section-header">
+    <div class="section-title">Active PRs</div>
+    <span class="section-count" id="pr-count">—</span>
+  </div>
+  <div id="pr-container">
+    <div class="loading-state">
+      <span class="loading-dot">●</span>
+      <span class="loading-dot">●</span>
+      <span class="loading-dot">●</span>
+    </div>
+  </div>
+</div>
+
 <script>
 const BASE = window.location.pathname.replace(/\/[^/]*$/, '');
 const DATA = BASE + '/data';
+
+// ── Config ─────────────────────────────────────────────────────────────────
+window.WB_CONFIG = {};
+async function loadConfig() {
+  try {
+    const r = await fetch(BASE + '/config.json', { cache: 'no-store' });
+    if (r.ok) window.WB_CONFIG = await r.json();
+  } catch (_) { /* fall back to empty — hardcoded defaults remain in template strings */ }
+}
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 function relativeTime(dateStr) {
@@ -270,7 +406,7 @@ function renderWorktrees(data) {
   document.getElementById('wt-count').textContent = data.length + ' worktree' + (data.length !== 1 ? 's' : '');
 
   if (!data.length) {
-    container.innerHTML = '<div class="error-state">No matching worktrees found in ~/workspace/.</div>';
+    container.innerHTML = '<div class="error-state">No matching worktrees found in ' + escHtml(window.WB_CONFIG.workspace_dir || '~/workspace') + '/.</div>';
     return;
   }
 
@@ -505,13 +641,193 @@ function _showTransitionError(msg) {
   setTimeout(() => { el.style.display = 'none'; }, 7000);
 }
 
+// ── Active PRs ─────────────────────────────────────────────────────────────
+
+// Map a DSR/DFR status string to a colour token (passed/failed/running/unknown)
+function psClass(status) {
+  const s = (status || '').toUpperCase().replace(/_/g,' ');
+  if (['PASSED','DONE','SUCCESS','SUCCEEDED','COMPLETED'].includes(s)) return 'passed';
+  if (['FAILED','ERROR','ERRORED'].includes(s))                         return 'failed';
+  if (['ABORTED','CANCELLED','CANCELED'].includes(s))                   return 'failed';
+  if (['RUNNING','IN PROGRESS','PENDING','QUEUED'].includes(s))         return 'running';
+  return 'unknown';
+}
+
+// Single pill for DSR or DFR (used in both right-side header row and expanded body)
+function renderStatusPill(entry, label) {
+  if (!entry) return '';
+  const cls  = psClass(entry.status);
+  const href = entry.url ? `href="${escHtml(entry.url)}" target="_blank"` : '';
+  const tip  = `${label}${entry.status ? ': ' + escHtml(entry.status) : ''}`;
+  return `<a class="pr-status-pill ps-${cls}" ${href} title="${tip}"
+             onclick="event.stopPropagation()">
+    <span class="ps-dot psd-${cls}"></span>${label}
+  </a>`;
+}
+
+// Right-side row of pills: first DSR + first DFR, side by side
+function renderStatusPills(pr) {
+  const d = (pr.dsr || [])[0];
+  const f = (pr.dfr || [])[0];
+  if (!d && !f) return '';
+  return `<div class="pr-status-pills">
+    ${renderStatusPill(d, 'DSR')}
+    ${renderStatusPill(f, 'DFR')}
+  </div>`;
+}
+
+// All DSR + DFR entries for the expanded body (clickable links + status badge)
+function renderDsrLinks(entries, label) {
+  if (!entries || !entries.length) return '';
+  const rows = entries.map(e => {
+    const cls  = psClass(e.status);
+    const href = e.url ? `href="${escHtml(e.url)}" target="_blank"` : '';
+    const idStr = e.id ? `#${e.id}` : '';
+    const statusBadge = e.status
+      ? `<span class="pr-dsr-status ps-${cls}">${escHtml(e.status)}</span>` : '';
+    return `<div class="pr-dsr-entry">
+      <span class="pr-dsr-badge ps-${cls}">${escHtml(label)}</span>
+      ${e.url
+        ? `<a class="pr-dsr-link" ${href} onclick="event.stopPropagation()">${escHtml(idStr || e.url)}</a>`
+        : `<span class="pr-dsr-link" style="color:var(--gray-500)">${escHtml(idStr || 'no link')}</span>`}
+      ${statusBadge}
+    </div>`;
+  }).join('');
+  return rows;
+}
+
+// Reviewer row: green tick for APPROVED, capped at 6 + "+N more" note
+function renderReviewers(reviewers) {
+  if (!reviewers || !reviewers.length) return '';
+  const MAX = 6;
+  const visible  = reviewers.slice(0, MAX);
+  const overflow = reviewers.length - MAX;
+  const rows = visible.map(rv => {
+    const s = (rv.state || '').toUpperCase().replace(/_/g,' ');
+    const approved = s === 'APPROVED';
+    let icon, iconCls, stateLabel;
+    if (approved) {
+      icon = '✓'; iconCls = 'rv-approved'; stateLabel = 'Approved';
+    } else if (s === 'CHANGES REQUESTED') {
+      icon = '✗'; iconCls = 'rv-changes-requested'; stateLabel = 'Changes requested';
+    } else if (s === 'COMMENTED') {
+      icon = '…'; iconCls = 'rv-commented'; stateLabel = 'Commented';
+    } else if (s === 'DISMISSED') {
+      icon = '—'; iconCls = 'rv-dismissed'; stateLabel = 'Dismissed';
+    } else {
+      icon = '○'; iconCls = 'rv-review-requested'; stateLabel = 'Pending';
+    }
+    const nameClass = approved ? 'rv-login rv-approved-name' : 'rv-login';
+    return `<div class="reviewer-row">
+      <span class="rv-icon ${iconCls}">${icon}</span>
+      <span class="${nameClass}">${escHtml(rv.login)}</span>
+      <span class="rv-state">${stateLabel}</span>
+    </div>`;
+  }).join('');
+  const more = overflow > 0
+    ? `<div class="rv-more">+${overflow} more reviewer${overflow > 1 ? 's' : ''}</div>` : '';
+  return rows + more;
+}
+
+function renderPRCard(pr) {
+  const num = pr.number ? `#${pr.number}` : '';
+  const age = relativeTime(pr.updated_at || pr.created_at);
+
+  const statusPills = renderStatusPills(pr);
+
+  const jiraChips = (pr.jira_ids || []).map(id =>
+    `<a class="pr-jira-chip" href="jira-detail.html?id=${escHtml(id)}"
+        onclick="event.stopPropagation()">${escHtml(id)}</a>`
+  ).join('');
+
+  const allDsrLinks = renderDsrLinks(pr.dsr, 'DSR') + renderDsrLinks(pr.dfr, 'DFR');
+  const reviewersHtml = renderReviewers(pr.reviewers);
+
+  const hasDetails = jiraChips || reviewersHtml || pr.branch || allDsrLinks;
+
+  return `
+  <div class="pr-card" id="pr-card-${pr.number}">
+    <div class="pr-card-header" onclick="togglePRCard(${pr.number})" role="button" tabindex="0"
+         onkeydown="if(event.key==='Enter'||event.key===' ')togglePRCard(${pr.number})">
+      ${hasDetails ? '<span class="pr-chevron">▶</span>' : '<span class="pr-chevron" style="visibility:hidden">▶</span>'}
+      <span class="pr-num">${escHtml(num)}</span>
+      <a class="pr-title" href="${escHtml(pr.url || '#')}" target="_blank"
+         title="${escHtml(pr.title)}"
+         onclick="event.stopPropagation()">${escHtml(pr.title)}</a>
+      <div class="pr-meta-right">
+        ${statusPills}
+        ${age ? `<span class="pr-age">${age}</span>` : ''}
+      </div>
+    </div>
+    ${hasDetails ? `
+    <div class="pr-card-body">
+      ${pr.branch ? `<div class="pr-branch">${escHtml(pr.branch)}${pr.base ? ' → ' + escHtml(pr.base) : ''}</div>` : ''}
+      ${jiraChips ? `
+      <div class="pr-body-section">
+        <div class="pr-body-label">Jira</div>
+        <div class="pr-jira-chips">${jiraChips}</div>
+      </div>` : ''}
+      ${allDsrLinks ? `
+      <div class="pr-body-section">
+        <div class="pr-body-label">DSR / DFR</div>
+        <div class="pr-dsr-list">${allDsrLinks}</div>
+      </div>` : ''}
+      ${reviewersHtml ? `
+      <div class="pr-body-section">
+        <div class="pr-body-label">Reviewers</div>
+        <div class="reviewer-list">${reviewersHtml}</div>
+      </div>` : ''}
+    </div>` : ''}
+  </div>`;
+}
+
+function togglePRCard(num) {
+  const card = document.getElementById('pr-card-' + num);
+  if (card) card.classList.toggle('expanded');
+}
+
+function renderPRSubsection(prs, emptyMsg) {
+  if (!prs || !prs.length) {
+    return `<div class="pr-subsection-empty">${emptyMsg}</div>`;
+  }
+  return '<div class="pr-list">' + prs.map(renderPRCard).join('') + '</div>';
+}
+
+function renderPRs(data) {
+  const container  = document.getElementById('pr-container');
+  const devPRs     = data.avi_dev  || data.prs || [];
+  const testPRs    = data.avi_test || [];
+  const total      = devPRs.length + testPRs.length;
+  const repoDev    = (window.WB_CONFIG.gh_repo_dev  || 'avi-dev');
+  const repoTest   = (window.WB_CONFIG.gh_repo_test || 'avi-test');
+  document.getElementById('pr-count').textContent = total + ' PR' + (total !== 1 ? 's' : '');
+
+  container.innerHTML = `
+    <div class="pr-subsection">
+      <div class="pr-subsection-header">
+        <span class="pr-subsection-title">${escHtml(repoDev)}</span>
+        <span class="pr-subsection-count">${devPRs.length}</span>
+      </div>
+      ${renderPRSubsection(devPRs, 'No active PRs in ' + escHtml(repoDev) + '.')}
+    </div>
+    <div class="pr-subsection" style="margin-top:var(--sp-5)">
+      <div class="pr-subsection-header">
+        <span class="pr-subsection-title">${escHtml(repoTest)}</span>
+        <span class="pr-subsection-count">${testPRs.length}</span>
+      </div>
+      ${renderPRSubsection(testPRs, 'No active PRs in ' + escHtml(repoTest) + '.')}
+    </div>`;
+}
+
 // ── Load data ──────────────────────────────────────────────────────────────
-async function loadAll() {
+async function loadAll(skipConfig) {
+  if (!skipConfig) await loadConfig();
   try {
-    const [metaRes, wtRes, sprintRes] = await Promise.all([
+    const [metaRes, wtRes, sprintRes, prRes] = await Promise.all([
       fetch(DATA + '/meta.json?t='      + Date.now(), { cache: 'no-store' }),
       fetch(DATA + '/worktrees.json?t=' + Date.now(), { cache: 'no-store' }),
       fetch(DATA + '/sprint.json?t='    + Date.now(), { cache: 'no-store' }),
+      fetch(DATA + '/prs.json?t='       + Date.now(), { cache: 'no-store' }),
     ]);
 
     if (metaRes.ok) {
@@ -527,6 +843,13 @@ async function loadAll() {
     } else {
       document.getElementById('worktree-container').innerHTML =
         '<div class="error-state">Could not load worktrees.json. Run update-all.sh first.</div>';
+    }
+
+    if (prRes.ok) {
+      renderPRs(await prRes.json());
+    } else {
+      document.getElementById('pr-container').innerHTML =
+        '<div class="error-state">Could not load prs.json. Run update-all.sh first.</div>';
     }
 
     if (sprintRes.ok) {
@@ -581,7 +904,7 @@ function refreshData() {
       btn.textContent = '↻ Refresh';
       if (res.ok) {
         status.textContent = '✓ Done';
-        loadAll();
+        loadAll(true);
         setTimeout(() => { status.textContent = ''; }, 3000);
       } else {
         status.textContent = '✗ Scripts failed — check data/server.log';
@@ -591,7 +914,8 @@ function refreshData() {
     .catch(() => {
       btn.classList.remove('loading');
       btn.textContent = '↻ Refresh';
-      status.textContent = 'Server offline — run: bash /var/www/html/workbench/scripts/start-server.sh';
+      const wbDir = (window.WB_CONFIG.workbench_dir || '/var/www/html/workbench');
+      status.textContent = 'Server offline — run: bash ' + wbDir + '/scripts/start-server.sh';
       loadAll();
       setTimeout(() => { status.textContent = ''; }, 8000);
     });

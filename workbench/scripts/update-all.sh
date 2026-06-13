@@ -15,14 +15,17 @@ mkdir -p "$SCRIPT_DIR/../data/jira"
 
 log "=== Workbench data refresh started ==="
 
-log "--- Step 1/3: Fetching worktrees ---"
+log "--- Step 1/4: Fetching worktrees ---"
 bash "$SCRIPT_DIR/fetch-worktrees.sh" 2>&1 | tee -a "$LOG_FILE"
 
-log "--- Step 2/3: Fetching JIRA sprint ---"
+log "--- Step 2/4: Fetching JIRA sprint ---"
 bash "$SCRIPT_DIR/fetch-jira.sh" 2>&1 | tee -a "$LOG_FILE"
 
-log "--- Step 3/3: Fetching JIRA ticket details ---"
+log "--- Step 3/4: Fetching JIRA ticket details ---"
 bash "$SCRIPT_DIR/fetch-jira-detail.sh" --all 2>&1 | tee -a "$LOG_FILE"
+
+log "--- Step 4/4: Fetching active PRs ---"
+bash "$SCRIPT_DIR/fetch-prs.sh" 2>&1 | tee -a "$LOG_FILE"
 
 # Write a metadata file so the UI can show last-updated time
 python3 - "$SCRIPT_DIR/../data" <<'PYEOF'
@@ -43,10 +46,16 @@ wt_count = 0
 if os.path.exists(wt_file):
     wt_count = len(json.load(open(wt_file)))
 
+pr_count = 0
+pr_file = os.path.join(data_dir, 'prs.json')
+if os.path.exists(pr_file):
+    pr_count = len(json.load(open(pr_file)).get('prs', []))
+
 meta = {
     'last_updated': datetime.now(timezone.utc).isoformat(),
     'worktrees':    wt_count,
     'sprint':       sprint_stats,
+    'pr_count':     pr_count,
 }
 with open(os.path.join(data_dir, 'meta.json'), 'w') as f:
     json.dump(meta, f, indent=2)

@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 # fetch-worktrees.sh
-# Scans ~/workspace/*/; includes only dirs whose git remote matches avi-dev.
-# Outputs: /var/www/html/workbench/data/worktrees.json
+# Scans $WORKSPACE/*/; includes only dirs whose git remote matches avi-dev.
 
 set -euo pipefail
 
-WORKSPACE="$HOME/workspace"
+source "$(dirname "${BASH_SOURCE[0]}")/load-config.sh"
+
 OUT_DIR="$(dirname "$0")/../data"
 OUT_FILE="$OUT_DIR/worktrees.json"
-TARGET_REMOTE="git@github-vcf.devops.broadcom.net:ANS/avi-dev.git"
+TARGET_REMOTE="$AVI_DEV_REMOTE"
 
 mkdir -p "$OUT_DIR"
 
