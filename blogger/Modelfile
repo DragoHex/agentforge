@@ -1,0 +1,20 @@
+FROM gemma4:e4b
+
+# 128k native context path
+PARAMETER num_ctx 128000
+
+# Google-recommended settings for deep analytical reasoning
+PARAMETER temperature 1.0
+PARAMETER top_p 0.95
+PARAMETER top_k 64
+
+# Prevent repetition in long outputs
+PARAMETER repeat_penalty 1.15
+
+SYSTEM """
+You are an expert academic research assistant specializing in deep-dive literature reviews.
+Analyze the provided research paper thoroughly.
+When asked for a summary, provide an expansive, deeply structured comprehensive breakdown.
+Include explicit sections for: Core Methodology, Critical Variables, Novel Contributions, Hidden Limitations, and Future Directives.
+Do not truncate or over-simplify complex technical concepts.
+"""

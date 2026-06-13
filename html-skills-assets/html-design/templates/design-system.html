@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Design System Reference</title>
+<style>
+  :root { --ivory:#FAF9F5; --slate:#141413; --clay:#D97757; --olive:#788C5D; --oat:#E3DACC; --gray-150:#F0EEE6; --gray-300:#D1CFC5; --gray-500:#87867F; --gray-700:#3D3D3A; --white:#FFF; --danger:#B04A4A; --warning:#C78E3F; --info:#5C7CA3; --font-sans:system-ui,-apple-system,sans-serif; --font-mono:ui-monospace,Menlo,monospace; }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{font:430 16px/1.55 var(--font-sans);color:var(--slate);background:var(--ivory);max-width:900px;margin:0 auto;padding:32px 24px;-webkit-font-smoothing:antialiased}
+  h1{font:500 32px/1.2 var(--font-sans);margin-bottom:8px}
+  h2{font:500 20px/1.3 var(--font-sans);margin:40px 0 16px;padding-bottom:6px;border-bottom:1px solid var(--gray-300)}
+  .subtitle{color:var(--gray-500);font-size:14px;margin-bottom:28px}
+
+  /* ── Color Swatches ── */
+  .swatch-group{margin-bottom:24px}
+  .swatch-group h3{font:500 13px/1.4 var(--font-sans);color:var(--gray-500);text-transform:uppercase;letter-spacing:.03em;margin-bottom:10px}
+  .swatches{display:flex;flex-wrap:wrap;gap:12px}
+  .swatch{display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer}
+  .swatch:hover .swatch-chip{transform:scale(1.08)}
+  .swatch-chip{width:80px;height:56px;border-radius:10px;border:1px solid var(--gray-300);transition:transform .12s}
+  .swatch-name{font:11px var(--font-mono);color:var(--gray-500)}
+  .swatch-hex{font:11px var(--font-mono);color:var(--gray-700)}
+  .swatch .copied{display:none;font:10px var(--font-sans);color:var(--olive)}
+  .swatch.copied .swatch-hex{display:none}
+  .swatch.copied .copied{display:block}
+
+  /* ── Typography ── */
+  .type-sample{background:var(--white);border:1px solid var(--gray-300);border-radius:10px;padding:20px;margin-bottom:12px;display:flex;align-items:baseline;gap:20px}
+  .type-sample .preview{flex:1}
+  .type-sample .meta{text-align:right;font:11px var(--font-mono);color:var(--gray-500);white-space:nowrap}
+  .type-display{font:500 48px/1.1 var(--font-sans);margin-bottom:4px}
+  .type-h1{font:500 32px/1.2 var(--font-sans)}
+  .type-h2{font:500 24px/1.3 var(--font-sans)}
+  .type-body{font:430 16px/1.55 var(--font-sans)}
+  .type-small{font:430 14px/1.5 var(--font-sans)}
+  .type-caption{font:500 12px/1.4 var(--font-sans)}
+
+  /* ── Spacing ── */
+  .space-bars{display:flex;flex-direction:column;gap:12px}
+  .space-bar{display:flex;align-items:center;gap:12px}
+  .space-bar .bar{height:24px;background:var(--clay);border-radius:4px;min-width:4px;opacity:0.85}
+  .space-bar .label{font:11px var(--font-mono);color:var(--gray-500);white-space:nowrap;width:60px;text-align:right}
+
+  /* ── Radius ── */
+  .radius-samples{display:flex;gap:16px;flex-wrap:wrap}
+  .radius-sample{width:64px;height:64px;background:var(--white);border:1px solid var(--gray-300);display:flex;align-items:center;justify-content:center;font:10px var(--font-mono);color:var(--gray-500)}
+
+  /* ── Shadows ── */
+  .shadow-cards{display:flex;gap:16px;flex-wrap:wrap}
+  .shadow-card{width:120px;height:80px;background:var(--white);border-radius:10px;display:flex;align-items:center;justify-content:center;font:10px var(--font-mono);color:var(--gray-500)}
+
+  /* ── Components ── */
+  .comp-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+  .comp-label{font:11px var(--font-mono);color:var(--gray-500);min-width:80px}
+  .btn-sample{font:500 14px/1.4 var(--font-sans);padding:8px 18px;border-radius:8px;border:1px solid var(--gray-300);background:var(--white);cursor:default}
+  .btn-sample.primary{background:var(--slate);color:var(--white);border-color:var(--slate)}
+  .btn-sample.clay{background:var(--clay);color:var(--white);border-color:var(--clay)}
+  .btn-sample.olive{background:var(--olive);color:var(--white);border-color:var(--olive)}
+  .btn-sample.sm{padding:4px 12px;font-size:12px}
+  .badge-sample{font:500 11px/1.4 var(--font-sans);padding:2px 8px;border-radius:4px}
+  .toggle-sample{width:40px;height:22px;border-radius:12px;background:var(--gray-300);position:relative;cursor:default}
+  .toggle-sample.on{background:var(--olive)}
+  .toggle-sample::after{content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:var(--white);transition:left .15s}
+  .toggle-sample.on::after{left:20px}
+</style>
+</head>
+<body>
+
+<h1><!-- DESIGN SYSTEM NAME e.g. Birchline — Design System Reference --></h1>
+<p class="subtitle"><!-- Context line --></p>
+
+<!-- Color -->
+<h2>Color</h2>
+<div class="swatch-group">
+  <h3>Primary</h3>
+  <div class="swatches">
+    <div class="swatch" onclick="copySwatch(this,'#D97757')">
+      <div class="swatch-chip" style="background:#D97757"></div>
+      <span class="swatch-name">--clay</span>
+      <span class="swatch-hex">#D97757</span>
+      <span class="copied">Copied!</span>
+    </div>
+    <div class="swatch" onclick="copySwatch(this,'#141413')">
+      <div class="swatch-chip" style="background:#141413"></div>
+      <span class="swatch-name">--slate</span>
+      <span class="swatch-hex">#141413</span>
+      <span class="copied">Copied!</span>
+    </div>
+    <div class="swatch" onclick="copySwatch(this,'#FAF9F5')">
+      <div class="swatch-chip" style="background:#FAF9F5"></div>
+      <span class="swatch-name">--ivory</span>
+      <span class="swatch-hex">#FAF9F5</span>
+      <span class="copied">Copied!</span>
+    </div>
+    <div class="swatch" onclick="copySwatch(this,'#E3DACC')">
+      <div class="swatch-chip" style="background:#E3DACC"></div>
+      <span class="swatch-name">--oat</span>
+      <span class="swatch-hex">#E3DACC</span>
+      <span class="copied">Copied!</span>
+    </div>
+  </div>
+</div>
+<div class="swatch-group">
+  <h3>Neutral</h3>
+  <div class="swatches">
+    <div class="swatch" onclick="copySwatch(this,'#FFFFFF')">
+      <div class="swatch-chip" style="background:#FFFFFF"></div><span class="swatch-name">--white</span><span class="swatch-hex">#FFFFFF</span><span class="copied">Copied!</span>
+    </div>
+    <div class="swatch" onclick="copySwatch(this,'#F0EEE6')">
+      <div class="swatch-chip" style="background:#F0EEE6"></div><span class="swatch-name">--gray-100</span><span class="swatch-hex">#F0EEE6</span><span class="copied">Copied!</span>
+    </div>
+    <div class="swatch" onclick="copySwatch(this,'#D1CFC5')">
+      <div class="swatch-chip" style="background:#D1CFC5"></div><span class="swatch-name">--gray-300</span><span class="swatch-hex">#D1CFC5</span><span class="copied">Copied!</span>
+    </div>
+    <div class="swatch" onclick="copySwatch(this,'#87867F')">
+      <div class="swatch-chip" style="background:#87867F"></div><span class="swatch-name">--gray-500</span><span class="swatch-hex">#87867F</span><span class="copied">Copied!</span>
+    </div>
+    <div class="swatch" onclick="copySwatch(this,'#3D3D3A')">
+      <div class="swatch-chip" style="background:#3D3D3A"></div><span class="swatch-name">--gray-700</span><span class="swatch-hex">#3D3D3A</span><span class="copied">Copied!</span>
+    </div>
+  </div>
+</div>
+<div class="swatch-group">
+  <h3>Semantic</h3>
+  <div class="swatches">
+    <div class="swatch" onclick="copySwatch(this,'#788C5D')">
+      <div class="swatch-chip" style="background:#788C5D"></div><span class="swatch-name">--success</span><span class="swatch-hex">#788C5D</span><span class="copied">Copied!</span>
+    </div>
+    <div class="swatch" onclick="copySwatch(this,'#C78E3F')">
+      <div class="swatch-chip" style="background:#C78E3F"></div><span class="swatch-name">--warning</span><span class="swatch-hex">#C78E3F</span><span class="copied">Copied!</span>
+    </div>
+    <div class="swatch" onclick="copySwatch(this,'#B04A4A')">
+      <div class="swatch-chip" style="background:#B04A4A"></div><span class="swatch-name">--danger</span><span class="swatch-hex">#B04A4A</span><span class="copied">Copied!</span>
+    </div>
+    <div class="swatch" onclick="copySwatch(this,'#5C7CA3')">
+      <div class="swatch-chip" style="background:#5C7CA3"></div><span class="swatch-name">--info</span><span class="swatch-hex">#5C7CA3</span><span class="copied">Copied!</span>
+    </div>
+  </div>
+</div>
+
+<!-- Typography -->
+<h2>Typography</h2>
+<div class="type-sample"><div class="preview"><div class="type-display">Plan the week ahead</div></div><div class="meta">Display<br>48 / 1.1 / 500</div></div>
+<div class="type-sample"><div class="preview"><div class="type-h1">Plan the week ahead</div></div><div class="meta">Heading 1<br>32 / 1.2 / 500</div></div>
+<div class="type-sample"><div class="preview"><div class="type-h2">Plan the week ahead</div></div><div class="meta">Heading 2<br>24 / 1.3 / 500</div></div>
+<div class="type-sample"><div class="preview"><div class="type-body">Review milestones, assign owners, and surface blockers before they cascade.</div></div><div class="meta">Body<br>16 / 1.55 / 430</div></div>
+<div class="type-sample"><div class="preview"><div class="type-small">Review milestones, assign owners, and surface blockers before they cascade.</div></div><div class="meta">Small<br>14 / 1.5 / 430</div></div>
+<div class="type-sample"><div class="preview"><div class="type-caption">UPDATED 2 HOURS AGO</div></div><div class="meta">Caption<br>12 / 1.4 / 500</div></div>
+
+<!-- Spacing -->
+<h2>Spacing</h2>
+<div class="space-bars">
+  <div class="space-bar"><span class="label">--sp-1</span><div class="bar" style="width:4px"></div></div>
+  <div class="space-bar"><span class="label">--sp-2</span><div class="bar" style="width:8px"></div></div>
+  <div class="space-bar"><span class="label">--sp-3</span><div class="bar" style="width:12px"></div></div>
+  <div class="space-bar"><span class="label">--sp-4</span><div class="bar" style="width:16px"></div></div>
+  <div class="space-bar"><span class="label">--sp-5</span><div class="bar" style="width:24px"></div></div>
+  <div class="space-bar"><span class="label">--sp-6</span><div class="bar" style="width:32px"></div></div>
+  <div class="space-bar"><span class="label">--sp-7</span><div class="bar" style="width:48px"></div></div>
+  <div class="space-bar"><span class="label">--sp-8</span><div class="bar" style="width:64px"></div></div>
+</div>
+
+<!-- Radius & Elevation -->
+<h2>Radius &amp; Elevation</h2>
+<div style="display:flex;gap:32px;flex-wrap:wrap">
+  <div>
+    <h3 style="font:500 12px/1.4 var(--font-sans);color:var(--gray-500);margin-bottom:10px">Border radius</h3>
+    <div class="radius-samples">
+      <div class="radius-sample" style="border-radius:4px">4px<br>--r-xs</div>
+      <div class="radius-sample" style="border-radius:8px">8px<br>--r-sm</div>
+      <div class="radius-sample" style="border-radius:12px">12px<br>--r-md</div>
+      <div class="radius-sample" style="border-radius:20px">20px<br>--r-lg</div>
+    </div>
+  </div>
+  <div>
+    <h3 style="font:500 12px/1.4 var(--font-sans);color:var(--gray-500);margin-bottom:10px">Box shadow</h3>
+    <div class="shadow-cards">
+      <div class="shadow-card" style="box-shadow:0 1px 2px rgba(0,0,0,0.06)">--shadow-sm</div>
+      <div class="shadow-card" style="box-shadow:0 4px 10px rgba(0,0,0,0.08)">--shadow-md</div>
+      <div class="shadow-card" style="box-shadow:0 12px 28px rgba(0,0,0,0.12)">--shadow-lg</div>
+    </div>
+  </div>
+</div>
+
+<!-- Core Components -->
+<h2>Core components</h2>
+<div class="comp-row">
+  <span class="comp-label">Button</span>
+  <span class="btn-sample primary">Create task</span>
+  <span class="btn-sample">Cancel</span>
+  <span class="btn-sample clay">Skip</span>
+  <span class="btn-sample olive sm">Delete</span>
+</div>
+<div class="comp-row">
+  <span class="comp-label">Badge</span>
+  <span class="badge-sample" style="background:var(--clay);color:#FFF">Draft</span>
+  <span class="badge-sample" style="background:var(--olive);color:#FFF">Done</span>
+  <span class="badge-sample" style="background:var(--warning);color:#FFF">Overdue</span>
+</div>
+<div class="comp-row">
+  <span class="comp-label">Toggle</span>
+  <span class="toggle-sample on"></span>
+  <span class="toggle-sample"></span>
+</div>
+<div class="comp-row">
+  <span class="comp-label">Checkbox</span>
+  <input type="checkbox" checked style="accent-color:var(--clay)"> Notify assignees<br>
+  <input type="checkbox" style="accent-color:var(--clay)"> Archive on complete
+</div>
+
+<script>
+  function copySwatch(el, hex) {
+    navigator.clipboard.writeText(hex).then(() => {
+      el.classList.add('copied');
+      setTimeout(() => el.classList.remove('copied'), 1200);
+    });
+  }
+</script>
+
+</body>
+</html>

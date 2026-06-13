@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Incident Post-Mortem</title>
+<style>
+  :root { --ivory:#FAF9F5; --slate:#141413; --clay:#D97757; --olive:#788C5D; --oat:#E3DACC; --gray-150:#F0EEE6; --gray-300:#D1CFC5; --gray-500:#87867F; --gray-700:#3D3D3A; --white:#FFF; --danger:#B04A4A; --info:#5C7CA3; --font-sans:system-ui,-apple-system,sans-serif; --font-mono:ui-monospace,Menlo,monospace; }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{font:430 16px/1.55 var(--font-sans);color:var(--slate);background:var(--ivory);max-width:960px;margin:0 auto;padding:32px 24px;-webkit-font-smoothing:antialiased}
+  h1{font:500 32px/1.2 var(--font-sans);margin-bottom:8px}
+  h2{font:500 24px/1.3 var(--font-sans);margin:40px 0 16px;padding-bottom:8px;border-bottom:1px solid var(--gray-300)}
+  .subtitle{color:var(--gray-500);font-size:14px;margin-bottom:24px}
+
+  /* ── TL;DR Box ── */
+  .tldr{background:var(--white);border-left:3px solid var(--clay);border-radius:0 12px 12px 0;padding:20px 24px;margin-bottom:32px}
+  .tldr h3{font:500 16px/1.3 var(--font-sans);color:var(--clay);margin-bottom:8px}
+  .tldr p{font-size:15px;color:var(--gray-700);margin:0}
+
+  /* ── Timeline ── */
+  .timeline{position:relative;padding-left:100px;margin-bottom:32px}
+  .timeline::before{content:"";position:absolute;left:85px;top:0;bottom:0;width:2px;background:var(--gray-300)}
+  .tl-row{display:flex;align-items:flex-start;margin-bottom:18px;position:relative}
+  .tl-time{width:75px;text-align:right;padding-right:20px;font:12px/1.4 var(--font-mono);color:var(--gray-500);flex-shrink:0;padding-top:2px}
+  .tl-row::before{content:"";position:absolute;left:80px;top:6px;width:12px;height:12px;border-radius:50%;border:2px solid var(--gray-300);background:var(--white);z-index:1}
+  .tl-row.severe::before{background:var(--danger);border-color:var(--danger)}
+  .tl-row.mitigated::before{background:var(--info);border-color:var(--info)}
+  .tl-row.resolved::before{background:var(--olive);border-color:var(--olive)}
+  .tl-event{font-size:14px;color:var(--slate);padding-top:2px}
+  .tl-actor{color:var(--gray-500);font-size:12px}
+
+  /* ── Root Cause ── */
+  .root-cause{background:var(--white);border:1px solid var(--gray-300);border-radius:12px;padding:24px;margin-bottom:32px}
+  .root-cause p{font-size:14px;color:var(--gray-700);margin-bottom:16px}
+  .root-cause .diff{margin-top:12px}
+
+  /* ── Impact Table ── */
+  .impact-table{width:100%;border-collapse:collapse;font-size:14px;margin-bottom:32px}
+  .impact-table td{padding:10px 14px;border-bottom:1px solid var(--gray-150)}
+  .impact-table td:first-child{font:500 13px/1.4 var(--font-sans);color:var(--gray-500);width:200px}
+  .impact-table td:last-child{color:var(--slate)}
+
+  /* ── Action Items ── */
+  .actions-table{width:100%;border-collapse:collapse;font-size:14px;margin-bottom:32px}
+  .actions-table th{text-align:left;font:500 12px/1.4 var(--font-sans);color:var(--gray-500);text-transform:uppercase;letter-spacing:.03em;padding:8px 12px;border-bottom:1px solid var(--gray-300)}
+  .actions-table td{padding:10px 12px;border-bottom:1px solid var(--gray-150)}
+  .actions-table td:first-child{font:12px var(--font-mono);color:var(--gray-500);width:30px}
+  .checkmark{color:var(--olive);font-weight:700}
+</style>
+</head>
+<body>
+
+<h1><!-- INC-YYYY-NNNN — Title --></h1>
+<p class="subtitle"><!-- Date and severity --></p>
+
+<!-- TL;DR -->
+<div class="tldr">
+  <h3>TL;DR</h3>
+  <p><!-- 2-3 sentence summary: what happened, impact duration, how it was fixed, any data loss? --></p>
+</div>
+
+<!-- Timeline -->
+<h2>Timeline</h2>
+<div class="timeline">
+  <!-- 
+  TL ROW — repeat for each event:
+  <div class="tl-row [severe|mitigated|resolved]">
+    <div class="tl-time">HH:MM</div>
+    <div class="tl-event">Event description. <span class="tl-actor">(Name)</span></div>
+  </div>
+  -->
+  <div class="tl-row">
+    <div class="tl-time">14:02</div>
+    <div class="tl-event">Config change promoted to production.</div>
+  </div>
+  <div class="tl-row severe">
+    <div class="tl-time">14:06</div>
+    <div class="tl-event">Impact starts. Latency spikes, load balancer returns 502s.</div>
+  </div>
+  <div class="tl-row severe">
+    <div class="tl-time">14:07</div>
+    <div class="tl-event">Alert fires. On-call acknowledges. <span class="tl-actor">(On-call)</span></div>
+  </div>
+  <div class="tl-row">
+    <div class="tl-time">14:18</div>
+    <div class="tl-event">Initial hypothesis tested — no effect. Investigation pivots.</div>
+  </div>
+  <div class="tl-row mitigated">
+    <div class="tl-time">HH:MM</div>
+    <div class="tl-event">Mitigated. Config reverted; fleet cycled. <span class="tl-actor">(Name)</span></div>
+  </div>
+  <div class="tl-row resolved">
+    <div class="tl-time">HH:MM</div>
+    <div class="tl-event">Monitors green. Incident resolved.</div>
+  </div>
+</div>
+
+<!-- Root Cause -->
+<h2>Root cause</h2>
+<div class="root-cause">
+  <p><!-- Explanation of what went wrong and why. Include: what was intended, what actually happened, why detection failed. --></p>
+  <div class="diff">
+    <pre><!-- The offending code/config change, with +/- lines --></pre>
+  </div>
+</div>
+
+<!-- Impact -->
+<h2>Impact</h2>
+<table class="impact-table">
+  <tr><td>Requests failed (502)</td><td><!-- ~N,NNN --></td></tr>
+  <tr><td>Peak error rate</td><td><!-- XX% --></td></tr>
+  <tr><td>Users affected</td><td><!-- ~N workspaces --></td></tr>
+  <tr><td>Data loss</td><td><!-- None / Description --></td></tr>
+  <tr><td>SLA breach</td><td><!-- No (within budget) / Yes --></td></tr>
+</table>
+
+<!-- Action Items -->
+<h2>Action items</h2>
+<table class="actions-table">
+  <thead><tr><th></th><th>Action</th><th>Owner</th><th>Due</th></tr></thead>
+  <tbody>
+    <tr>
+      <td class="checkmark">✓</td>
+      <td><!-- Immediate mitigation already done --></td>
+      <td><!-- Initials --></td>
+      <td><!-- Date --></td>
+    </tr>
+    <tr>
+      <td></td>
+      <td><!-- Preventative measure --></td>
+      <td><!-- Initials --></td>
+      <td><!-- Date --></td>
+    </tr>
+    <tr>
+      <td></td>
+      <td><!-- Process improvement --></td>
+      <td><!-- Initials --></td>
+      <td><!-- Date --></td>
+    </tr>
+  </tbody>
+</table>
+
+</body>
+</html>

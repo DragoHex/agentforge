@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Explainer</title>
+<style>
+  :root { --ivory:#FAF9F5; --slate:#141413; --clay:#D97757; --olive:#788C5D; --oat:#E3DACC; --gray-150:#F0EEE6; --gray-300:#D1CFC5; --gray-500:#87867F; --gray-700:#3D3D3A; --white:#FFF; --warning:#C78E3F; --info:#5C7CA3; --font-sans:system-ui,-apple-system,sans-serif; --font-mono:ui-monospace,Menlo,monospace; }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{font:430 16px/1.55 var(--font-sans);color:var(--slate);background:var(--ivory);max-width:900px;margin:0 auto;padding:32px 24px;-webkit-font-smoothing:antialiased}
+  h1{font:500 32px/1.2 var(--font-sans);margin-bottom:8px}
+  h2{font:500 24px/1.3 var(--font-sans);margin:32px 0 12px}
+  .subtitle{color:var(--gray-500);font-size:14px;margin-bottom:24px}
+
+  /* ── TL;DR Box ── */
+  .tldr{background:var(--white);border-left:3px solid var(--clay);border-radius:0 12px 12px 0;padding:20px 24px;margin-bottom:32px}
+  .tldr h3{font:500 16px/1.3 var(--font-sans);color:var(--clay);margin-bottom:6px}
+  .tldr p{font-size:15px;color:var(--gray-700);margin:0}
+
+  /* ── Collapsible Steps ── */
+  details.step{background:var(--white);border:1px solid var(--gray-300);border-radius:12px;margin-bottom:12px;overflow:hidden}
+  details.step summary{font:500 16px/1.4 var(--font-sans);padding:16px 20px;cursor:pointer;list-style:none;display:flex;align-items:center;gap:12px;user-select:none}
+  details.step summary::-webkit-details-marker{display:none}
+  details.step summary::before{content:"›";font-size:20px;color:var(--gray-500);transition:transform .2s;min-width:16px;text-align:center}
+  details.step[open] summary::before{transform:rotate(90deg)}
+  details.step .step-num{font:12px var(--font-mono);color:var(--gray-500)}
+  details.step .step-body{padding:0 20px 20px 48px}
+  details.step .step-body p{font-size:14px;color:var(--gray-700)}
+  details.step .step-body pre{margin-top:12px;background:var(--ivory)}
+
+  /* ── Tabbed Code ── */
+  .tabs{margin-bottom:24px}
+  .tab-labels{display:flex;gap:4px;margin-bottom:-1px}
+  .tab-labels label{font:500 13px/1.4 var(--font-sans);padding:10px 18px;border:1px solid var(--gray-300);border-bottom:none;border-radius:8px 8px 0 0;background:var(--gray-150);color:var(--gray-500);cursor:pointer;transition:background .1s}
+  .tab-labels label:hover{background:var(--white)}
+  .tab-content{display:none;background:var(--white);border:1px solid var(--gray-300);border-radius:0 0 12px 12px;padding:20px}
+  .tab-content pre{margin:0;background:var(--ivory)}
+  /* Show active tab via radio hack */
+  .tab-radio{display:none}
+  .tab-radio:checked + .tab-content{display:block}
+  .tab-radio:checked + .tab-content + .tab-labels label[for]{background:var(--white);color:var(--slate);border-bottom-color:var(--white)}
+  /* Simpler approach: use JS-driven tabs */
+  .tab-btn.active{background:var(--white)!important;color:var(--slate)!important;border-bottom-color:var(--white)!important}
+
+  /* ── FAQ Accordion ── */
+  details.faq{background:var(--white);border:1px solid var(--gray-300);border-radius:8px;margin-bottom:8px}
+  details.faq summary{font:500 15px/1.4 var(--font-sans);padding:14px 18px;cursor:pointer;color:var(--slate)}
+  details.faq .faq-answer{padding:0 18px 16px;font-size:14px;color:var(--gray-700)}
+
+  /* ── Glossary ── */
+  .glossary{margin-top:32px;padding:20px 24px;background:var(--gray-150);border-radius:12px}
+  .glossary h3{font:500 16px/1.3 var(--font-sans);margin-bottom:12px}
+  .glossary dt{font:500 13px var(--font-mono);color:var(--slate);margin-top:12px}
+  .glossary dd{font-size:14px;color:var(--gray-700);margin-left:0;margin-top:2px}
+
+  /* ── Comparison Table ── */
+  table{margin:24px 0;width:100%;border-collapse:collapse;font-size:14px}
+  th{text-align:left;font:500 12px/1.4 var(--font-sans);color:var(--gray-500);padding:8px 12px;border-bottom:1px solid var(--gray-300)}
+  td{padding:10px 12px;border-bottom:1px solid var(--gray-150)}
+  td:first-child code{font-size:12px}
+</style>
+</head>
+<body>
+
+<h1><!-- TITLE e.g. "How rate limiting works" --></h1>
+<p class="subtitle"><!-- Research & Learning · feature explainer --></p>
+
+<!-- TL;DR -->
+<div class="tldr">
+  <h3>TL;DR</h3>
+  <p><!-- 2-3 sentence summary. What it does, where it lives, how much overhead. --></p>
+</div>
+
+<!-- Collapsible Steps -->
+<h2>The request path, step by step</h2>
+
+<details class="step" open>
+  <summary><span class="step-num">1</span> · Step name</summary>
+  <div class="step-body">
+    <p><!-- What happens in this step --></p>
+    <pre><!-- Annotated code snippet --></pre>
+  </div>
+</details>
+
+<details class="step">
+  <summary><span class="step-num">2</span> · Step name</summary>
+  <div class="step-body">
+    <p><!-- Description --></p>
+    <pre><!-- Code --></pre>
+  </div>
+</details>
+
+<!-- Tabbed Code (JS-driven) -->
+<h2>Configuring a limit</h2>
+<div class="tabs" id="config-tabs">
+  <div class="tab-labels">
+    <button class="tab-btn active" onclick="switchTab('tab-yaml')">limits.yaml</button>
+    <button class="tab-btn" onclick="switchTab('tab-route')">route.ts</button>
+    <button class="tab-btn" onclick="switchTab('tab-response')">client response</button>
+  </div>
+  <div class="tab-content active" id="tab-yaml">
+    <pre><!-- YAML config snippet --></pre>
+  </div>
+  <div class="tab-content" id="tab-route">
+    <pre><!-- TypeScript route snippet --></pre>
+  </div>
+  <div class="tab-content" id="tab-response">
+    <pre><!-- HTTP response example --></pre>
+  </div>
+</div>
+
+<!-- Gotchas -->
+<h2>Gotchas worth knowing</h2>
+<ul style="list-style:none;padding:0">
+  <li style="padding:8px 0 8px 20px;position:relative;font-size:14px;color:var(--gray-700)">
+    <span style="position:absolute;left:0;color:var(--warning)">⚠</span>
+    <!-- Gotcha description -->
+  </li>
+</ul>
+
+<!-- FAQ -->
+<h2>FAQ</h2>
+<details class="faq">
+  <summary>How do I exempt internal traffic?</summary>
+  <div class="faq-answer"><!-- Answer --></div>
+</details>
+<details class="faq">
+  <summary>Where do I see who's getting limited?</summary>
+  <div class="faq-answer"><!-- Answer --></div>
+</details>
+
+<!-- Comparison Table -->
+<h2>Comparison</h2>
+<table>
+  <thead><tr><th>Metric</th><th>Approach A</th><th>Approach B</th></tr></thead>
+  <tbody>
+    <tr><td><code>Key metric</code></td><td><!-- A value --></td><td><!-- B value --></td></tr>
+  </tbody>
+</table>
+
+<!-- Glossary -->
+<div class="glossary">
+  <h3>Glossary</h3>
+  <dl>
+    <dt>Term</dt>
+    <dd>Definition.</dd>
+  </dl>
+</div>
+
+<script>
+  function switchTab(tabId) {
+    const parent = document.getElementById('config-tabs');
+    parent.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    parent.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(tabId).classList.add('active');
+  }
+  // Wire up tab buttons with matching event
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    if (!btn.onclick) btn.addEventListener('click', function() {
+      const tabId = this.getAttribute('onclick')?.match(/'([^']+)'/)?.[1];
+    });
+  });
+</script>
+
+</body>
+</html>

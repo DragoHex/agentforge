@@ -1,0 +1,6 @@
+pdfminer.six
+pypdf
+pypdfium2
+requests
+Markdown
+playwright

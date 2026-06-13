@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Animation Sandbox</title>
+<style>
+  :root { --ivory:#FAF9F5; --slate:#141413; --clay:#D97757; --olive:#788C5D; --oat:#E3DACC; --gray-150:#F0EEE6; --gray-300:#D1CFC5; --gray-500:#87867F; --gray-700:#3D3D3A; --white:#FFF; --font-sans:system-ui,-apple-system,sans-serif; --font-mono:ui-monospace,Menlo,monospace; }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{font:430 16px/1.55 var(--font-sans);color:var(--slate);background:var(--ivory);max-width:860px;margin:0 auto;padding:32px 24px;-webkit-font-smoothing:antialiased}
+  h1{font:500 32px/1.2 var(--font-sans);margin-bottom:4px}
+  .subtitle{color:var(--gray-500);font-size:14px;margin-bottom:28px}
+
+  /* ── Preview Area ── */
+  .preview-area{background:var(--white);border:1px solid var(--gray-300);border-radius:12px;padding:32px;margin-bottom:24px;display:flex;align-items:center;justify-content:center;min-height:140px}
+  .task-row{display:flex;align-items:center;gap:12px;width:320px}
+  .task-row .check{width:22px;height:22px;border-radius:50%;border:2px solid var(--gray-300);flex-shrink:0;display:flex;align-items:center;justify-content:center;cursor:pointer}
+  .task-row .check.done{background:var(--olive);border-color:var(--olive);animation:settle 380ms cubic-bezier(.34,1.56,.64,1) forwards}
+  @keyframes settle{0%{transform:scale(.8);background:var(--clay)}55%{transform:scale(1.18)}100%{transform:scale(1);background:var(--olive)}}
+  .task-row .check.done svg path{stroke-dasharray:20;stroke-dashoffset:0;transition:stroke-dashoffset 220ms ease 80ms}
+  .task-row .label{font-size:15px;position:relative;cursor:pointer}
+  .task-row .label.done{opacity:.6;max-height:44px;transition:opacity .3s, max-height .3s .6s}
+  .task-row .label.done::after{content:"";position:absolute;left:0;top:50%;width:100%;height:1.5px;background:var(--gray-500);transform:scaleX(0);transform-origin:left;animation:strike .24s ease .12s forwards}
+  @keyframes strike{to{transform:scaleX(1)}}
+
+  /* ── Controls ── */
+  .controls-panel{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:24px}
+  .ctrl{background:var(--white);border:1px solid var(--gray-300);border-radius:10px;padding:16px}
+  .ctrl label{display:block;font:500 12px/1.4 var(--font-sans);color:var(--gray-500);margin-bottom:8px;text-transform:uppercase;letter-spacing:.03em}
+  .ctrl input[type=range]{width:100%;accent-color:var(--clay)}
+  .ctrl .range-val{font:12px var(--font-mono);color:var(--gray-500);margin-top:4px;text-align:right}
+  .ctrl select{width:100%;font:13px var(--font-sans);padding:6px 10px;border:1px solid var(--gray-300);border-radius:6px;background:var(--white)}
+  .btn-row{display:flex;gap:8px;margin-bottom:24px}
+  .btn{font:500 14px/1.4 var(--font-sans);padding:8px 20px;border-radius:8px;border:1px solid var(--gray-300);background:var(--white);cursor:pointer}
+  .btn:hover{background:var(--gray-150)}
+  .btn.primary{background:var(--clay);color:var(--white);border-color:var(--clay)}
+
+  /* ── Keyframe Timeline ── */
+  .kf-timeline{display:flex;gap:8px;margin-bottom:24px;align-items:flex-end}
+  .kf-step{flex:1;text-align:center}
+  .kf-dot{width:10px;height:10px;border-radius:50%;background:var(--gray-300);margin:0 auto 4px}
+  .kf-step.active .kf-dot{background:var(--clay)}
+  .kf-label{font:10px var(--font-mono);color:var(--gray-500)}
+  .kf-desc{font-size:12px;color:var(--gray-700);margin-top:2px}
+  .kf-line{flex:1;height:1px;background:var(--gray-300);margin-bottom:9px}
+
+  /* ── CSS Output ── */
+  .css-output{background:var(--white);border:1px solid var(--gray-300);border-radius:10px;overflow:hidden}
+  .css-output h3{font:500 13px/1.4 var(--font-sans);padding:12px 16px;background:var(--gray-150);border-bottom:1px solid var(--gray-300);color:var(--gray-700)}
+  .css-output pre{font:13px/1.5 var(--font-mono);padding:16px;margin:0;background:var(--ivory);border:none;color:var(--slate);border-radius:0}
+</style>
+</head>
+<body>
+
+<h1><!-- Animation name — e.g. "Task completed micro-interaction" --></h1>
+<p class="subtitle"><!-- Element label, e.g. "Send weekly digest · click to toggle" --></p>
+
+<!-- Preview -->
+<div class="preview-area">
+  <div class="task-row" id="taskRow">
+    <div class="check" id="check" onclick="toggleAnimation()">
+      <svg width="12" height="10" viewBox="0 0 12 10"><path d="M1 5l3 3 7-7" stroke="#FFF" stroke-width="1.5" fill="none"/></svg>
+    </div>
+    <span class="label" id="labelEl" onclick="toggleAnimation()"><!-- Task label --></span>
+  </div>
+</div>
+
+<!-- Controls -->
+<div class="controls-panel">
+  <div class="ctrl">
+    <label>Duration</label>
+    <input type="range" min="100" max="1000" value="380" step="10" id="duration" oninput="updateCSS()">
+    <div class="range-val" id="durVal">380ms</div>
+  </div>
+  <div class="ctrl">
+    <label>Delay</label>
+    <input type="range" min="0" max="300" value="80" step="10" id="delay" oninput="updateCSS()">
+    <div class="range-val" id="delVal">80ms</div>
+  </div>
+  <div class="ctrl">
+    <label>Easing</label>
+    <select id="easing" onchange="updateCSS()">
+      <option value="cubic-bezier(.34,1.56,.64,1)">spring (default)</option>
+      <option value="ease">ease</option>
+      <option value="ease-in">ease-in</option>
+      <option value="ease-out">ease-out</option>
+      <option value="cubic-bezier(.4,0,.2,1)">material</option>
+    </select>
+  </div>
+  <div class="ctrl">
+    <label>Stagger (strike delay)</label>
+    <input type="range" min="0" max="500" value="120" step="10" id="stagger" oninput="updateCSS()">
+    <div class="range-val" id="stagVal">120ms</div>
+  </div>
+</div>
+
+<div class="btn-row">
+  <button class="btn primary" onclick="toggleAnimation()">▶ Play</button>
+  <button class="btn" onclick="resetAnimation()">↺ Reset</button>
+</div>
+
+<!-- Keyframe Timeline -->
+<h3 style="font:500 14px/1.4 var(--font-sans);margin-bottom:12px">Keyframes</h3>
+<div class="kf-timeline">
+  <div class="kf-step active"><div class="kf-dot"></div><div class="kf-label">0ms</div><div class="kf-desc">fill</div></div>
+  <div class="kf-line"></div>
+  <div class="kf-step active"><div class="kf-dot"></div><div class="kf-label" id="kf1Time">80ms</div><div class="kf-desc">check</div></div>
+  <div class="kf-line"></div>
+  <div class="kf-step active"><div class="kf-dot"></div><div class="kf-label" id="kf2Time">120ms</div><div class="kf-desc">strike</div></div>
+  <div class="kf-line"></div>
+  <div class="kf-step active"><div class="kf-dot"></div><div class="kf-label" id="kf3Time">200ms</div><div class="kf-desc">confetti</div></div>
+  <div class="kf-line"></div>
+  <div class="kf-step"><div class="kf-dot"></div><div class="kf-label" id="kf4Time">600ms</div><div class="kf-desc">collapse</div></div>
+</div>
+
+<!-- Copy-paste CSS -->
+<div class="css-output">
+  <h3>Copy-paste CSS</h3>
+  <pre id="cssBlock">/* circle: clay flash, settle to olive with spring overshoot */
+.task.done .check {
+  animation: settle 380ms cubic-bezier(.34,1.56,.64,1) forwards;
+}
+@keyframes settle {
+  0%   { transform: scale(.8);  background: #D97757; }
+  55%  { transform: scale(1.18); }
+  100% { transform: scale(1);   background: #788C5D; }
+}</pre>
+</div>
+
+<script>
+  let isDone = false;
+  function toggleAnimation() {
+    const check = document.getElementById('check');
+    const label = document.getElementById('labelEl');
+    isDone = !isDone;
+    if (isDone) { check.classList.add('done'); label.classList.add('done'); }
+    else { check.classList.remove('done'); label.classList.remove('done'); }
+  }
+  function resetAnimation() {
+    isDone = false;
+    document.getElementById('check').classList.remove('done');
+    document.getElementById('labelEl').classList.remove('done');
+  }
+  function updateCSS() {
+    const dur = document.getElementById('duration').value;
+    const del = document.getElementById('delay').value;
+    const ease = document.getElementById('easing').value;
+    const stag = document.getElementById('stagger').value;
+    document.getElementById('durVal').textContent = dur + 'ms';
+    document.getElementById('delVal').textContent = del + 'ms';
+    document.getElementById('stagVal').textContent = stag + 'ms';
+    document.getElementById('cssBlock').textContent =
+`/* circle: clay flash, settle to olive with spring overshoot */
+.task.done .check {
+  animation: settle ${dur}ms ${ease} forwards;
+}
+@keyframes settle {
+  0%   { transform: scale(.8);  background: #D97757; }
+  55%  { transform: scale(1.18); }
+  100% { transform: scale(1);   background: #788C5D; }
+}
+
+/* checkmark draws via stroke-dashoffset, ${del}ms delay */
+.check path        { stroke-dasharray: 20; stroke-dashoffset: 20;
+                     transition: stroke-dashoffset 220ms ${ease} ${del}ms; }
+.task.done path    { stroke-dashoffset: 0; }
+
+/* strikethrough grows left → right */
+.label::after      { width: 0; transition: width 240ms ${ease} ${stag}ms; }
+.task.done .label::after { width: 100%; }`;
+  }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Component Variant Matrix</title>
+<style>
+  :root { --ivory:#FAF9F5; --slate:#141413; --clay:#D97757; --olive:#788C5D; --oat:#E3DACC; --gray-150:#F0EEE6; --gray-300:#D1CFC5; --gray-500:#87867F; --gray-700:#3D3D3A; --white:#FFF; --font-sans:system-ui,-apple-system,sans-serif; --font-mono:ui-monospace,Menlo,monospace; }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{font:430 16px/1.55 var(--font-sans);color:var(--slate);background:var(--ivory);max-width:1000px;margin:0 auto;padding:32px 24px;-webkit-font-smoothing:antialiased}
+  h1{font:500 32px/1.2 var(--font-sans);margin-bottom:8px}
+  .subtitle{color:var(--gray-500);font-size:14px;margin-bottom:24px}
+
+  /* ── Controls ── */
+  .controls{padding:16px 20px;background:var(--white);border:1px solid var(--gray-300);border-radius:10px;margin-bottom:24px;display:flex;flex-wrap:wrap;gap:16px;align-items:center}
+  .control-group{display:flex;align-items:center;gap:6px}
+  .control-group label{font:500 12px/1.4 var(--font-sans);color:var(--gray-500);text-transform:uppercase;letter-spacing:.03em}
+  .control-group select{font:13px var(--font-sans);padding:4px 10px;border:1px solid var(--gray-300);border-radius:6px;background:var(--white)}
+  .control-group input[type=checkbox]{accent-color:var(--clay)}
+
+  /* ── Variant Grid ── */
+  .variant-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;margin-bottom:24px}
+  .variant-card{padding:16px;border-radius:10px;cursor:pointer;transition:box-shadow .15s}
+  .variant-card:hover{box-shadow:var(--shadow-md)}
+  .variant-card .title{font:500 15px/1.3 var(--font-sans);margin-bottom:4px}
+  .variant-card .subtitle{font-size:13px;color:var(--gray-500);margin-bottom:8px}
+  .variant-card .badge-row{display:flex;gap:4px}
+  .variant-card .tag{font:10px var(--font-mono);padding:2px 8px;border-radius:4px;background:var(--gray-150);color:var(--gray-500)}
+  .variant-card .best-for{font-size:11px;color:var(--gray-500);margin-top:8px;font-style:italic}
+
+  /* Variant styles */
+  .v-flat{background:var(--white)}
+  .v-outlined{background:var(--white);border:1px solid var(--gray-300)}
+  .v-elevated{background:var(--white);border:1px solid var(--gray-300);box-shadow:var(--shadow-sm)}
+  .v-accent{background:var(--white);border-left:3px solid var(--clay)}
+  .v-inset{background:var(--gray-150);border-radius:10px}
+  .v-horizontal{display:flex;align-items:center;gap:12px;background:var(--white);border:1px solid var(--gray-300)}
+
+  /* ── Inspector ── */
+  .inspector{padding:16px 20px;background:var(--white);border:1px solid var(--gray-300);border-radius:10px;font:13px var(--font-mono);color:var(--gray-700);min-height:48px}
+  .inspector .empty{color:var(--gray-500)}
+</style>
+</head>
+<body>
+
+<h1><!-- COMPONENT NAME — Variant Matrix --></h1>
+<p class="subtitle"><!-- e.g. "Hover a variant to preview its props" --></p>
+
+<div class="controls">
+  <div class="control-group">
+    <label>Padding</label>
+    <select onchange="updateVariants()"><option>16px</option><option>20px</option><option>24px</option></select>
+  </div>
+  <div class="control-group">
+    <label>Border</label>
+    <select onchange="updateVariants()"><option>none</option><option>hairline</option><option>solid</option></select>
+  </div>
+  <div class="control-group">
+    <label><input type="checkbox" onchange="updateVariants()"> Show shadow</label>
+  </div>
+</div>
+
+<div class="variant-grid" id="grid">
+  <!-- 
+  VARIANT CARD — repeat for each variant:
+  <div class="variant-card v-flat" onmouseenter="showProps(this)" onmouseleave="clearProps()"
+       data-props='{"variant":"flat","padding":"16px","border":"none"}'>
+    <div class="title">A · Flat</div>
+    <div class="subtitle">Open →</div>
+    <div class="badge-row"><span class="tag">WP</span><span class="tag">12 tasks</span></div>
+    <div class="best-for">best for: dense lists on tinted backgrounds</div>
+  </div>
+  -->
+</div>
+
+<div class="inspector" id="inspector">
+  <span class="empty">// hover a card to preview its props</span>
+</div>
+
+<script>
+  function showProps(card) {
+    const props = card.dataset.props;
+    document.getElementById('inspector').innerHTML = '<code>' + props + '</code>';
+  }
+  function clearProps() {
+    document.getElementById('inspector').innerHTML = '<span class="empty">// hover a card to preview its props</span>';
+  }
+  function updateVariants() {
+    // Placeholder for live re-rendering logic
+  }
+</script>
+
+</body>
+</html>

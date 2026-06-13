@@ -1,0 +1,21 @@
+{
+  "type": "grouped_bar",
+  "title": "Odysseus vs Competitors",
+  "output": "/Users/msp/repo/agentforge/blogger/output/linkedin-visuals/comparison_chart.png",
+  "data": [
+    {
+      "label": "MCP Support",
+      "Odysseus": 100,
+      "Open WebUI": 35,
+      "Jan.ai": 20,
+      "Msty Claw": 15
+    },
+    {
+      "label": "Automated VRAM Math",
+      "Odysseus": 95,
+      "Open WebUI": 40,
+      "Jan.ai": 80,
+      "Msty Claw": 30
+    }
+  ]
+}

@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clickable Prototype</title>
+<style>
+  :root { --ivory:#FAF9F5; --slate:#141413; --clay:#D97757; --olive:#788C5D; --oat:#E3DACC; --gray-150:#F0EEE6; --gray-300:#D1CFC5; --gray-500:#87867F; --gray-700:#3D3D3A; --white:#FFF; --font-sans:system-ui,-apple-system,sans-serif; --font-mono:ui-monospace,Menlo,monospace; }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{font:430 16px/1.55 var(--font-sans);color:var(--slate);background:var(--ivory);max-width:700px;margin:0 auto;padding:32px 24px;-webkit-font-smoothing:antialiased}
+  h1{font:500 32px/1.2 var(--font-sans);margin-bottom:8px}
+  .subtitle{color:var(--gray-500);font-size:14px;margin-bottom:24px}
+
+  /* ── Phone Frame ── */
+  .phone-frame{width:375px;height:667px;margin:0 auto 32px;border:1px solid var(--gray-300);border-radius:24px;overflow:hidden;background:var(--white);box-shadow:var(--shadow-md);position:relative}
+  .screen{display:none;height:100%;flex-direction:column;animation:fadeIn .2s ease}
+  .screen.active{display:flex}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+
+  .screen-header{padding:16px 20px;border-bottom:1px solid var(--gray-150);display:flex;align-items:center;gap:12px;flex-shrink:0}
+  .screen-header .back-btn{font-size:20px;cursor:pointer;color:var(--gray-500);line-height:1}
+  .screen-header .title{font:500 16px/1.3 var(--font-sans);flex:1}
+  .screen-body{flex:1;padding:20px;overflow-y:auto}
+
+  .list-item{display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid var(--gray-150);cursor:pointer}
+  .list-item:hover{background:var(--gray-150);margin:0 -20px;padding:14px 20px}
+  .list-avatar{width:36px;height:36px;border-radius:50%;background:var(--clay);flex-shrink:0;display:flex;align-items:center;justify-content:center;color:#FFF;font:500 13px var(--font-sans)}
+  .list-info{flex:1}
+  .list-name{font-weight:500;font-size:14px}
+  .list-meta{font-size:12px;color:var(--gray-500)}
+
+  .detail-section{margin-bottom:20px}
+  .detail-section h3{font:500 12px/1.4 var(--font-sans);color:var(--gray-500);text-transform:uppercase;letter-spacing:.03em;margin-bottom:8px}
+  .detail-field{font-size:15px;margin-bottom:6px}
+
+  /* ── Design Decisions Panel ── */
+  .decisions{background:var(--white);border:1px solid var(--gray-300);border-radius:12px;padding:20px 24px}
+  .decisions h2{font:500 20px/1.3 var(--font-sans);margin-bottom:12px}
+  .decisions h3{font:500 13px/1.4 var(--font-sans);color:var(--gray-500);margin:16px 0 6px}
+  .decisions li{font-size:14px;color:var(--gray-700);margin-bottom:6px;padding-left:4px}
+  .decisions li::marker{color:var(--clay)}
+</style>
+</head>
+<body>
+
+<h1><!-- PROTOTYPE NAME e.g. "Sidebar drag-to-reorder" --></h1>
+<p class="subtitle"><!-- e.g. "Order persists in the DOM only — refresh to reset." --></p>
+
+<div class="phone-frame">
+  <!-- SCREEN 1 — List -->
+  <div class="screen active" id="screen-list">
+    <div class="screen-header">
+      <span class="title"><!-- List title --></span>
+    </div>
+    <div class="screen-body">
+      <div class="list-item" onclick="navigateTo('detail', {id:1, name:'Item 1'})">
+        <div class="list-avatar">A</div>
+        <div class="list-info"><div class="list-name"><!-- Item name --></div><div class="list-meta"><!-- Subtitle --></div></div>
+      </div>
+      <div class="list-item" onclick="navigateTo('detail', {id:2, name:'Item 2'})">
+        <div class="list-avatar" style="background:var(--olive)">B</div>
+        <div class="list-info"><div class="list-name"><!-- Item name --></div><div class="list-meta"><!-- Subtitle --></div></div>
+      </div>
+      <div class="list-item" onclick="navigateTo('detail', {id:3, name:'Item 3'})">
+        <div class="list-avatar" style="background:var(--info)">C</div>
+        <div class="list-info"><div class="list-name"><!-- Item name --></div><div class="list-meta"><!-- Subtitle --></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCREEN 2 — Detail -->
+  <div class="screen" id="screen-detail">
+    <div class="screen-header">
+      <span class="back-btn" onclick="navigateTo('list')">←</span>
+      <span class="title" id="detailTitle"><!-- Dynamic title --></span>
+    </div>
+    <div class="screen-body">
+      <div class="detail-section">
+        <h3>Info</h3>
+        <div class="detail-field" id="detailName"><!-- Name --></div>
+        <div class="detail-field" style="color:var(--gray-500)"><!-- Detail info --></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Design Decisions -->
+<div class="decisions">
+  <h2>What you're feeling</h2>
+  <p style="font-size:13px;color:var(--gray-500);margin-bottom:12px">Design decisions baked into this prototype, so you can push back on them.</p>
+  <ul>
+    <li><strong><!-- Decision 1 title --></strong> — <!-- Rationale --></li>
+    <li><strong><!-- Decision 2 title --></strong> — <!-- Rationale --></li>
+    <li><strong><!-- Decision 3 title --></strong> — <!-- Rationale --></li>
+  </ul>
+  <h3>Open questions</h3>
+  <ol style="padding-left:20px">
+    <li><!-- Question 1 --></li>
+    <li><!-- Question 2 --></li>
+  </ol>
+</div>
+
+<script>
+  const screens = document.querySelectorAll('.screen');
+  const state = {}; // Simple state store
+
+  function navigateTo(screenId, data) {
+    screens.forEach(s => s.classList.remove('active'));
+    const target = document.getElementById('screen-' + screenId);
+    if (target) target.classList.add('active');
+
+    // Populate data if navigating to detail
+    if (screenId === 'detail' && data) {
+      document.getElementById('detailTitle').textContent = data.name;
+      document.getElementById('detailName').textContent = data.name;
+      state.currentItem = data;
+    }
+  }
+</script>
+
+</body>
+</html>
